@@ -11,9 +11,9 @@ int main ( int argc, char *argv[] ){
         state = state - 2;
     }
     if (state == 0){
-        run_compression(argv[2 + verbose], argv[3 + verbose], verbose);
+        return run_compression(argv[2 + verbose], argv[3 + verbose], verbose);
     } else{
-        run_decompression(argv[2 + verbose], argv[3 + verbose], verbose);
+        return run_decompression(argv[2 + verbose], argv[3 + verbose], verbose);
     }
 }
 int parse_commandline_args(int argc, char *argv[]){
