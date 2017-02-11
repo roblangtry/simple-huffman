@@ -45,10 +45,3 @@ void print_bad_input_message(char *message){
     printf("   %s -d [--verbose|-v] <infile> <outfile>\n", message);
     printf("   %s -decompress [--verbose|-v] <infile> <outfile>\n", message);
 }
-int run_compression(char *input_filename, char *output_filename, int verbose_flag){
-    printf("compressing %s into %s verbose=%d\n", input_filename, output_filename, verbose_flag);
-}
-
-int run_decompression(char *input_filename, char *output_filename, int verbose_flag){
-    printf("decompressing %s into %s verbose=%d\n", input_filename, output_filename, verbose_flag);
-}
