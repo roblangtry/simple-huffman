@@ -11,6 +11,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     }
 
     list = evaluate_symbol_probabilities(input_file_pointer);
+    sort_symbol_probabilities(&list);
     fclose(input_file_pointer);
     fclose(output_file_pointer);
     return 1;
@@ -61,4 +62,16 @@ void add_to_probability_list(struct probability_list * list, int value){
         point.occurrences = 1;
         (*list).list[(*list).list_length - 1] = point;
     }
+}
+
+int compare_probability (const void * a, const void * b)
+{
+    int value_a, value_b;
+    value_a = (*(struct probability_point*)a).occurrences;
+    value_b = (*(struct probability_point*)b).occurrences;
+    return (value_b - value_a);
+}
+
+void sort_symbol_probabilities(struct probability_list * list){
+   qsort((*list).list, (*list).list_length, sizeof(struct probability_point), compare_probability);
 }

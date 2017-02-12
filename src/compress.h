@@ -14,4 +14,6 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
 struct probability_list evaluate_symbol_probabilities(FILE * input_file);
 struct probability_list initialise_probabilities_list(FILE * input_file);
 void add_to_probability_list(struct probability_list * list, int value);
+int compare_probability (const void * a, const void * b);
+void sort_symbol_probabilities(struct probability_list * list);
 #endif
