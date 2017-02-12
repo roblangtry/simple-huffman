@@ -16,6 +16,14 @@ struct huffman_tree_node {
     int frequency;
     int value;
 };
+struct symbol_length_pair {
+    int symbol;
+    int length;
+};
+struct model_input {
+    int no_symbols;
+    struct symbol_length_pair * list;
+};
 int run_compression(char *input_filename, char *output_filename, int verbose_flag);
 struct probability_list evaluate_symbol_probabilities(FILE * input_file);
 struct probability_list initialise_probabilities_list(FILE * input_file);
@@ -27,4 +35,5 @@ struct huffman_tree_node create_huffman_tree(struct probability_list list);
 struct huffman_tree_node * package_huffman_nodes(struct huffman_tree_node * right, struct huffman_tree_node * left);
 void print_symbol_frequencies(struct probability_list list);
 void print_huffman_tree(struct huffman_tree_node node, int level);
+struct model_input create_model_input(struct huffman_tree_node root);
 #endif

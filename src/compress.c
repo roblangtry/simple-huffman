@@ -5,6 +5,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     int value;
     struct probability_list list;
     struct huffman_tree_node huffman_root;
+    struct model_input model_input;
     input_file_pointer = fopen(input_filename, "r");
     output_file_pointer = fopen(output_filename, "w");
     while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
@@ -13,13 +14,14 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
 
     list = evaluate_symbol_probabilities(input_file_pointer);
     sort_symbol_probabilities(&list);
-    if (verbose_flag == 1){
+    if (verbose_flag == 1)
         print_symbol_frequencies(list);
-    }
     huffman_root = create_huffman_tree(list);
-    if (verbose_flag == 1){
+    if (verbose_flag == 1)
         print_huffman_tree(huffman_root, 0);
-    }
+    model_input = create_model_input(huffman_root);
+    if (verbose_flag == 1)
+        print_model_input(model_input);
     fclose(input_file_pointer);
     fclose(output_file_pointer);
     return 1;
@@ -131,7 +133,7 @@ struct huffman_tree_node * package_huffman_nodes(struct huffman_tree_node * righ
 }
 
 struct huffman_tree_node create_huffman_tree(struct probability_list list){
-    int i, last, second_last, len, j;
+    int i, last, second_last, len;
     struct huffman_tree_node * node;
     struct huffman_tree_node * nodes;
     struct huffman_tree_node * last_node_ptr;
@@ -195,4 +197,70 @@ void print_huffman_tree(struct huffman_tree_node node, int level){
     if(level == 0){
         printf("=======================\n");
     }
+}
+
+void print_model_input(struct model_input model_input){
+    int i;
+    printf("=======================\n");
+    printf("%10s | %10s\n", "Symbol", "Length");
+    printf("=======================\n");
+    i = 0;
+    while(i < model_input.no_symbols){
+        printf("%10d | %10d\n", model_input.list[i].symbol, model_input.list[i].length);
+        i++;
+    }
+    printf("=======================\n");
+}
+
+int compare_symbol_length (const void * a, const void * b)
+{
+    int value_a, value_b;
+    value_a = (*(struct probability_point*)a).occurrences;
+    value_b = (*(struct probability_point*)b).occurrences;
+    return (value_a - value_b);
+}
+
+struct model_input recursive_codeword_length(struct huffman_tree_node node, int level)
+{
+    struct model_input this_mi, left_mi, right_mi;
+    struct symbol_length_pair sl_pair;
+    int i;
+    sl_pair.symbol = node.value;
+    sl_pair.length = level;
+    if(node.right == NULL && node.left == NULL){
+        this_mi.no_symbols = 1;
+        this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
+        this_mi.list[0] = sl_pair;
+    } else {
+        this_mi.no_symbols = 0;
+        this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
+    }
+    if(node.right != NULL){
+        right_mi = recursive_codeword_length(*(node.right), level + 1);
+        this_mi.list = realloc(this_mi.list, sizeof(struct symbol_length_pair) * (this_mi.no_symbols + right_mi.no_symbols));
+        i = 0;
+        while (i < right_mi.no_symbols){
+            this_mi.list[this_mi.no_symbols + i] = right_mi.list[i];
+            i++;
+        }
+        this_mi.no_symbols = this_mi.no_symbols + right_mi.no_symbols;
+    }
+    if(node.left != NULL){
+        left_mi = recursive_codeword_length(*(node.left), level + 1);
+        this_mi.list = realloc(this_mi.list, sizeof(struct symbol_length_pair) * (this_mi.no_symbols + left_mi.no_symbols));
+        i = 0;
+        while (i < left_mi.no_symbols){
+            this_mi.list[this_mi.no_symbols + i] = left_mi.list[i];
+            i++;
+        }
+        this_mi.no_symbols = this_mi.no_symbols + left_mi.no_symbols;
+    }
+    return this_mi;
+}
+
+struct model_input create_model_input(struct huffman_tree_node root){
+    struct model_input model_input;
+    model_input = recursive_codeword_length(root, 0);
+    qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
+    return model_input;
 }
