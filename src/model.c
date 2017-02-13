@@ -42,6 +42,7 @@ struct model_input recursive_codeword_length(struct huffman_tree_node node, int 
 struct model_input create_model_input(struct huffman_tree_node root){
     struct model_input model_input;
     model_input = recursive_codeword_length(root, 0);
+    model_input.message_length = root.frequency;
     qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
     return model_input;
 }
@@ -53,6 +54,7 @@ struct model create_model(struct model_input model_input){
     int length_max;
     struct model model;
     no_symbols = model_input.no_symbols;
+    model.message_length = model_input.message_length;
     model.no_symbols = no_symbols;
     model.symbols = (int *) malloc(sizeof(int) * no_symbols);
     i = 0;
@@ -138,8 +140,12 @@ void print_model_input(struct model_input model_input){
 
 void write_model_input_to_file(struct model_input model_input, FILE * output_file_pointer){
     int no_symbols;
+    int message_length;
     int i;
     struct symbol_length_pair sl_pair;
+    message_length = model_input.message_length;
+    fwrite(&message_length, sizeof(int), 1, output_file_pointer);
+    fflush(output_file_pointer);
     no_symbols = model_input.no_symbols;
     fwrite(&no_symbols, sizeof(int), 1, output_file_pointer);
     fflush(output_file_pointer);
@@ -158,6 +164,8 @@ struct model_input read_model_input_from_file(FILE * input_file_ptr){
     int temp;
     int i;
     struct symbol_length_pair sl_pair;
+    fread(&temp, sizeof(int), 1, input_file_ptr);
+    model_input.message_length = temp;
     fread(&temp, sizeof(int), 1, input_file_ptr);
     model_input.no_symbols = temp;
     model_input.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair) * temp);

@@ -2,7 +2,6 @@
 int run_compression(char *input_filename, char *output_filename, int verbose_flag){
     FILE *input_file_pointer;
     FILE *output_file_pointer;
-    int value;
     struct probability_list list;
     struct huffman_tree_node huffman_root;
     struct model_input model_input;
@@ -25,11 +24,45 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
         print_model(model);
     write_model_input_to_file(model_input, output_file_pointer);
     rewind(input_file_pointer);
-    while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
-        fwrite(&value, sizeof(int), 1, output_file_pointer);
-        fflush(input_file_pointer);
-    }
+    write_compressed_file(input_file_pointer, output_file_pointer, model);
     fclose(input_file_pointer);
     fclose(output_file_pointer);
     return 1;
+}
+
+void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model){
+    int value;
+    struct bitlevel_object write_object;
+    struct bitlevel_file_pointer * bitlevel_file_pointer;
+    bitlevel_file_pointer = get_bitlevel_file_pointer(output_file_pointer);
+    while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
+        write_object = calculate_write_object(value, model);
+        bitlevel_write(bitlevel_file_pointer, write_object);
+    }
+    bitlevel_flush(bitlevel_file_pointer);
+}
+struct bitlevel_object calculate_write_object(int value, struct model model){
+    int offset;
+    int i;
+    int c;
+    struct bitlevel_object object;
+    offset = calculate_offset(value, model);
+    i = 0;
+    while(offset >= model.offset_l[i + 1]){
+        i++;
+    }
+    c = offset - model.offset_l[i] + model.base_l[i];
+    object.value = c;
+    object.length = i + 1;
+    return object;
+}
+int calculate_offset(int value, struct model model){
+    int i;
+    i = 0;
+    while(i < model.no_symbols){
+        if(model.symbols[i] == value)
+            return i + 1;
+        i++;
+    }
+    return -1;
 }

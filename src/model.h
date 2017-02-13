@@ -6,10 +6,12 @@
 #ifndef MODEL_CODE
 #define MODEL_CODE
 struct model_input {
+    int message_length;
     int no_symbols;
     struct symbol_length_pair * list;
 };
 struct model {
+    int message_length;
     int no_symbols;
     int * symbols;
     int length_max;
