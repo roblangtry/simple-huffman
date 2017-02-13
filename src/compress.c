@@ -6,6 +6,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     struct probability_list list;
     struct huffman_tree_node huffman_root;
     struct model_input model_input;
+    struct model model;
     input_file_pointer = fopen(input_filename, "r");
     output_file_pointer = fopen(output_filename, "w");
     while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
@@ -22,6 +23,9 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     model_input = create_model_input(huffman_root);
     if (verbose_flag == 1)
         print_model_input(model_input);
+    model = create_model(model_input);
+    if (verbose_flag == 1)
+        print_model(model);
     fclose(input_file_pointer);
     fclose(output_file_pointer);
     return 1;
@@ -263,4 +267,76 @@ struct model_input create_model_input(struct huffman_tree_node root){
     model_input = recursive_codeword_length(root, 0);
     qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
     return model_input;
+}
+struct model create_model(struct model_input model_input){
+    int i, j, k, next_base, L_minus_l_minus_1, lj_limit;
+    int no_symbols;
+    int length_max;
+    struct model model;
+    no_symbols = model_input.no_symbols;
+    model.no_symbols = no_symbols;
+    model.symbols = (int *) malloc(sizeof(int) * no_symbols);
+    i = 0;
+    while(i < no_symbols){
+        model.symbols[i] = model_input.list[i].symbol;
+        i++;
+    }
+    length_max = model_input.list[no_symbols - 1].length;
+    model.length_max = length_max;
+    model.no_words = (int *) malloc(sizeof(int) * (length_max + 1));
+    model.base_l = (int *) malloc(sizeof(int) * (length_max + 1));
+    model.offset_l = (int *) malloc(sizeof(int) * (length_max + 1));
+    model.lj_limit = (int *) malloc(sizeof(int) * (length_max + 1));
+    i = 0;
+    j = 0;
+    while(i < length_max){
+        k = 0;
+        model.offset_l[i] = j + 1;
+        while(model_input.list[j].length == (i + 1)){
+            k++;
+            j++;
+        }
+        model.no_words[i] = k;
+        if(i == 0){
+            model.base_l[i] = 0;
+        }else{
+            model.base_l[i] = 2 * (model.base_l[i - 1] + model.no_words[i - 1]);
+        }
+        if ((i + 1) == length_max){
+            model.lj_limit[i] = pow(2, length_max);
+        }else{
+            next_base = 2 * (model.base_l[i] + model.no_words[i]);
+            L_minus_l_minus_1 = length_max - (i+1) - 1;
+            lj_limit = (next_base * pow(2, L_minus_l_minus_1));
+            model.lj_limit[i] = lj_limit;
+        }
+        i++;
+    }
+    model.no_words[length_max] = 0;
+    model.base_l[length_max] = 2 * (model.base_l[length_max - 1] + model.no_words[length_max - 1]);
+    model.offset_l[length_max] = j + 1;
+    model.lj_limit[length_max] = 0;
+    return model;
+}
+
+void print_model(struct model model){
+    int i;
+    i = 0;
+    printf("=======================\n");
+    printf("%10s | %10s\n", "Offset", "Symbol");
+    printf("=======================\n");
+    while(i < model.no_symbols){
+        printf("%10d | %10d\n", i + 1, model.symbols[i]);
+        i++;
+    }
+    printf("=======================\n");
+    i = 0;
+    printf("=======================\n");
+    printf("%10s | %10s | %10s | %10s | %10s\n", "l", "wl", "base", "offset", "lj_limit");
+    printf("=======================\n");
+    while(i <= model.length_max){
+        printf("%10d | %10d | %10d | %10d | %10d\n",i + 1, model.no_words[i], model.base_l[i], model.offset_l[i], model.lj_limit[i]);
+        i++;
+    }
+    printf("=======================\n");
 }
