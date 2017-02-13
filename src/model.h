@@ -23,4 +23,6 @@ struct model_input create_model_input(struct huffman_tree_node root);
 struct model create_model(struct model_input model_input);
 void print_model(struct model model);
 void print_model_input(struct model_input model_input);
+void write_model_input_to_file(struct model_input model_input, FILE * output_file_pointer);
+struct model_input read_model_input_from_file(FILE * input_filename);
 #endif

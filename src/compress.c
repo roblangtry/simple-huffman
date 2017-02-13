@@ -23,10 +23,11 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     model = create_model(model_input);
     if (verbose_flag == 1)
         print_model(model);
-
+    write_model_input_to_file(model_input, output_file_pointer);
     rewind(input_file_pointer);
     while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
-        fprintf(output_file_pointer, "%d\n", value);
+        fwrite(&value, sizeof(int), 1, output_file_pointer);
+        fflush(input_file_pointer);
     }
     fclose(input_file_pointer);
     fclose(output_file_pointer);

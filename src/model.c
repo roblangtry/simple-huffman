@@ -124,6 +124,8 @@ void print_model(struct model model){
 void print_model_input(struct model_input model_input){
     int i;
     printf("=======================\n");
+    printf("no_symbols -> %d\n", model_input.no_symbols);
+    printf("=======================\n");
     printf("%10s | %10s\n", "Symbol", "Length");
     printf("=======================\n");
     i = 0;
@@ -134,3 +136,39 @@ void print_model_input(struct model_input model_input){
     printf("=======================\n");
 }
 
+void write_model_input_to_file(struct model_input model_input, FILE * output_file_pointer){
+    int no_symbols;
+    int i;
+    struct symbol_length_pair sl_pair;
+    no_symbols = model_input.no_symbols;
+    fwrite(&no_symbols, sizeof(int), 1, output_file_pointer);
+    fflush(output_file_pointer);
+    i = 0;
+    while(i < no_symbols){
+        sl_pair = model_input.list[i];
+        fwrite(&(sl_pair.symbol), sizeof(int), 1, output_file_pointer);
+        fflush(output_file_pointer);
+        fwrite(&(sl_pair.length), sizeof(int), 1, output_file_pointer);
+        fflush(output_file_pointer);
+        i++;
+    }
+}
+struct model_input read_model_input_from_file(FILE * input_file_ptr){
+    struct model_input model_input;
+    int temp;
+    int i;
+    struct symbol_length_pair sl_pair;
+    fread(&temp, sizeof(int), 1, input_file_ptr);
+    model_input.no_symbols = temp;
+    model_input.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair) * temp);
+    i = 0;
+    while(i < model_input.no_symbols){
+        fread(&temp, sizeof(int), 1, input_file_ptr);
+        sl_pair.symbol = temp;
+        fread(&temp, sizeof(int), 1, input_file_ptr);
+        sl_pair.length = temp;
+        model_input.list[i] = sl_pair;
+        i++;
+    }
+    return model_input;
+}
