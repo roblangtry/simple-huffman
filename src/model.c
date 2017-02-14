@@ -145,19 +145,16 @@ void write_model_input_to_file(struct model_input model_input, FILE * output_fil
     struct symbol_length_pair sl_pair;
     message_length = model_input.message_length;
     fwrite(&message_length, sizeof(int), 1, output_file_pointer);
-    fflush(output_file_pointer);
     no_symbols = model_input.no_symbols;
     fwrite(&no_symbols, sizeof(int), 1, output_file_pointer);
-    fflush(output_file_pointer);
     i = 0;
     while(i < no_symbols){
         sl_pair = model_input.list[i];
         fwrite(&(sl_pair.symbol), sizeof(int), 1, output_file_pointer);
-        fflush(output_file_pointer);
         fwrite(&(sl_pair.length), sizeof(int), 1, output_file_pointer);
-        fflush(output_file_pointer);
         i++;
     }
+    fflush(output_file_pointer);
 }
 struct model_input read_model_input_from_file(FILE * input_file_ptr){
     struct model_input model_input;
