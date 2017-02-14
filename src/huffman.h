@@ -10,9 +10,10 @@ struct huffman_tree_node {
     int frequency;
     int value;
 };
-
+struct huffman_tree_node * initialise_huffman_tree(struct probability_list list);
 struct huffman_tree_node create_huffman_tree(struct probability_list list);
 struct huffman_tree_node * package_huffman_nodes(struct huffman_tree_node * right, struct huffman_tree_node * left);
-int compare_huffman_tree_node_pointers (const void * a, const void * b);
+struct huffman_tree_node * get_smallest_node(struct huffman_tree_node * leaf_nodes, int * length_leaf_nodes_list, struct huffman_tree_node ** packaged_node_pointers, int * length_packaged_list);
 void print_huffman_tree(struct huffman_tree_node node, int level);
+void move_forward_list(struct huffman_tree_node **package_pointers, int package_pointers_length);
 #endif
