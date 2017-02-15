@@ -9,6 +9,7 @@ struct model_input recursive_codeword_length(struct huffman_tree_node node, int 
     sl_pair.symbol = node.value;
     sl_pair.length = level;
     if(node.right == NULL && node.left == NULL){
+        //this is a leaf node
         this_mi.no_symbols = 1;
         this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
         this_mi.list[0] = sl_pair;
@@ -46,7 +47,45 @@ struct model_input create_model_input(struct huffman_tree_node root){
     qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
     return model_input;
 }
-
+int compare_symbol_offset (const void * a, const void * b)
+{
+    int value_a, value_b;
+    value_a = (*(struct symbol_offset*)a).symbol;
+    value_b = (*(struct symbol_offset*)b).symbol;
+    return (value_a - value_b);
+}
+void handle_symbol_data_for_model(struct model_input model_input, struct model * model_ptr){
+    int i = 0;
+    struct symbol_offset so_pair;
+    model_ptr->binary_search_table = (struct symbol_offset *) malloc(sizeof(struct symbol_offset) * model_input.no_symbols);
+    model_ptr->symbols = (int *) malloc(sizeof(int) * model_input.no_symbols);
+    while(i < model_input.no_symbols){
+        model_ptr->symbols[i] = model_input.list[i].symbol;
+        so_pair.symbol = model_input.list[i].symbol;
+        so_pair.offset = i;
+        model_ptr->binary_search_table[i] = so_pair;
+        i++;
+    }
+    qsort(model_ptr->binary_search_table, model_input.no_symbols, sizeof(struct symbol_offset), compare_symbol_offset);
+}
+int find_symbol_offset(int symbol, struct model model){
+    int index_to_check;
+    int upper_bound;
+    int lower_bound;
+    upper_bound = model.no_symbols - 1;
+    lower_bound = 0;
+    index_to_check = upper_bound / 2;
+    while(symbol != model.binary_search_table[index_to_check].symbol){
+        if(symbol > model.binary_search_table[index_to_check].symbol){
+            lower_bound = index_to_check;
+            index_to_check = ((upper_bound - lower_bound) / 2 + ((upper_bound - lower_bound)%2)) + lower_bound;
+        } else{
+            upper_bound = index_to_check;
+            index_to_check = ((upper_bound - lower_bound) / 2 ) + lower_bound;
+        }
+    }
+    return model.binary_search_table[index_to_check].offset;
+}
 
 struct model create_model(struct model_input model_input){
     int i, j, k, next_base, L_minus_l_minus_1, lj_limit;
@@ -56,12 +95,7 @@ struct model create_model(struct model_input model_input){
     no_symbols = model_input.no_symbols;
     model.message_length = model_input.message_length;
     model.no_symbols = no_symbols;
-    model.symbols = (int *) malloc(sizeof(int) * no_symbols);
-    i = 0;
-    while(i < no_symbols){
-        model.symbols[i] = model_input.list[i].symbol;
-        i++;
-    }
+    handle_symbol_data_for_model(model_input, &model);
     length_max = model_input.list[no_symbols - 1].length;
     model.length_max = length_max;
     model.no_words = (int *) malloc(sizeof(int) * (length_max + 1));

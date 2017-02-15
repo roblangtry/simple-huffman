@@ -10,16 +10,25 @@ struct model_input {
     int no_symbols;
     struct symbol_length_pair * list;
 };
+struct symbol_offset
+{
+    int offset;
+    int symbol;
+};
 struct model {
     int message_length;
     int no_symbols;
     int * symbols;
+    struct symbol_offset * binary_search_table;
     int length_max;
     int * no_words;
     int * base_l;
     int * offset_l;
     int * lj_limit;
 };
+int compare_symbol_offset (const void * a, const void * b);
+void handle_symbol_data_for_model(struct model_input model_input, struct model * model_ptr);
+int find_symbol_offset(int symbol, struct model model);
 struct model_input recursive_codeword_length(struct huffman_tree_node node, int level);
 struct model_input create_model_input(struct huffman_tree_node root);
 struct model create_model(struct model_input model_input);

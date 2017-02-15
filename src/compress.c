@@ -46,7 +46,7 @@ struct bitlevel_object calculate_write_object(int value, struct model model){
     int i;
     int c;
     struct bitlevel_object object;
-    offset = calculate_offset(value, model);
+    offset = find_symbol_offset(value, model) + 1; // +1 because offsets start at 0 instead of 1
     i = 0;
     while(offset >= model.offset_l[i + 1]){
         i++;
@@ -55,14 +55,4 @@ struct bitlevel_object calculate_write_object(int value, struct model model){
     object.value = c;
     object.length = i + 1;
     return object;
-}
-int calculate_offset(int value, struct model model){
-    int i;
-    i = 0;
-    while(i < model.no_symbols){
-        if(model.symbols[i] == value)
-            return i + 1;
-        i++;
-    }
-    return -1;
 }
