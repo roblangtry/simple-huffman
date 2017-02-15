@@ -3,24 +3,30 @@
 
 struct model_input recursive_codeword_length(struct huffman_tree_node node, int level)
 {
+    // A recursive function to map the depth of the huffman tree (as lengths)
     struct model_input this_mi, left_mi, right_mi;
     struct symbol_length_pair sl_pair;
     int i;
     sl_pair.symbol = node.value;
     sl_pair.length = level;
     if(node.right == NULL && node.left == NULL){
-        //this is a leaf node
+        //this is a leaf node so set it to length 1 and add the symbol length pair
         this_mi.no_symbols = 1;
         this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
         this_mi.list[0] = sl_pair;
     } else {
+        // This is not a leaf node so set everything as zero
         this_mi.no_symbols = 0;
         this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
     }
     if(node.right != NULL){
+        // If the right node isn't NULL run recursive on it
         right_mi = recursive_codeword_length(*(node.right), level + 1);
+        // Setup the list to have enough room for all lower symbols
         this_mi.list = realloc(this_mi.list, sizeof(struct symbol_length_pair) * (this_mi.no_symbols + right_mi.no_symbols));
         i = 0;
+        // While there are still symbols in the lower model input read them
+        // into this model input
         while (i < right_mi.no_symbols){
             this_mi.list[this_mi.no_symbols + i] = right_mi.list[i];
             i++;
@@ -28,9 +34,13 @@ struct model_input recursive_codeword_length(struct huffman_tree_node node, int 
         this_mi.no_symbols = this_mi.no_symbols + right_mi.no_symbols;
     }
     if(node.left != NULL){
+        // If the left node isn't NULL run recursive on it
         left_mi = recursive_codeword_length(*(node.left), level + 1);
+        // Setup the list to have enough room for all lower symbols and existing symbols
         this_mi.list = realloc(this_mi.list, sizeof(struct symbol_length_pair) * (this_mi.no_symbols + left_mi.no_symbols));
         i = 0;
+        // While there are still symbols in the lower model input read them
+        // into this model input
         while (i < left_mi.no_symbols){
             this_mi.list[this_mi.no_symbols + i] = left_mi.list[i];
             i++;
@@ -41,14 +51,19 @@ struct model_input recursive_codeword_length(struct huffman_tree_node node, int 
 }
 
 struct model_input create_model_input(struct huffman_tree_node root){
+    // Create the model input from the huffman tree
     struct model_input model_input;
+    // Recursively analyse the tree to get the codeword lengths for symbols
     model_input = recursive_codeword_length(root, 0);
+    // The frequency of the root node is the total number of symbols in the file
     model_input.message_length = root.frequency;
+    // Sort the model_input list so it has highest frequency elements at the 'top'(0 offset)
     qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
     return model_input;
 }
 int compare_symbol_offset (const void * a, const void * b)
 {
+    // Compare the symbol offset for qsort
     int value_a, value_b;
     value_a = (*(struct symbol_offset*)a).symbol;
     value_b = (*(struct symbol_offset*)b).symbol;
@@ -57,29 +72,43 @@ int compare_symbol_offset (const void * a, const void * b)
 void handle_symbol_data_for_model(struct model_input model_input, struct model * model_ptr){
     int i = 0;
     struct symbol_offset so_pair;
+    // Allocate enough memory for the binary search table and symbols
     model_ptr->binary_search_table = (struct symbol_offset *) malloc(sizeof(struct symbol_offset) * model_input.no_symbols);
     model_ptr->symbols = (int *) malloc(sizeof(int) * model_input.no_symbols);
+    // While the index is less than the number of symbols
     while(i < model_input.no_symbols){
+        // Add the symbol to the model
         model_ptr->symbols[i] = model_input.list[i].symbol;
+        // Setup the symbol offset object for this symbol
         so_pair.symbol = model_input.list[i].symbol;
         so_pair.offset = i;
+        // Add that symbol offset to the binary search table
         model_ptr->binary_search_table[i] = so_pair;
         i++;
     }
+    // Sort the binary search table
     qsort(model_ptr->binary_search_table, model_input.no_symbols, sizeof(struct symbol_offset), compare_symbol_offset);
 }
 int find_symbol_offset(int symbol, struct model model){
+    // Find the offset for a symbol by binary searching the binary search table in the model
     int index_to_check;
     int upper_bound;
     int lower_bound;
+    // Set the bounds [0, n] where n is the last offset in the list
     upper_bound = model.no_symbols - 1;
     lower_bound = 0;
+    // Set the index to check
     index_to_check = upper_bound / 2;
+    // While the symbol being pointed to in the search table doesnt equal the query symbol
     while(symbol != model.binary_search_table[index_to_check].symbol){
         if(symbol > model.binary_search_table[index_to_check].symbol){
+            // The symbol is higher in the table than this so set this index
+            // as the new lower bound
             lower_bound = index_to_check;
             index_to_check = ((upper_bound - lower_bound) / 2 + ((upper_bound - lower_bound)%2)) + lower_bound;
         } else{
+            // The symbol is lower in the table than this so set this index
+            // as the new upper bound
             upper_bound = index_to_check;
             index_to_check = ((upper_bound - lower_bound) / 2 ) + lower_bound;
         }
@@ -88,53 +117,65 @@ int find_symbol_offset(int symbol, struct model model){
 }
 
 struct model create_model(struct model_input model_input){
-    int i, j, k, next_base, L_minus_l_minus_1, lj_limit;
+    int length, next_base, L_minus_l_minus_1, lj_limit;
     int no_symbols;
+    int no_words;
+    int current_offset;
     int length_max;
     struct model model;
     no_symbols = model_input.no_symbols;
     model.message_length = model_input.message_length;
     model.no_symbols = no_symbols;
+    // Add the symbols and the binary search table to the model
     handle_symbol_data_for_model(model_input, &model);
     length_max = model_input.list[no_symbols - 1].length;
+    // Add the length to the model and allocate the memory for the
+    // w_l, Base_l, Offset_l and lj_limit values
     model.length_max = length_max;
     model.no_words = (int *) malloc(sizeof(int) * (length_max + 1));
     model.base_l = (int *) malloc(sizeof(int) * (length_max + 1));
     model.offset_l = (int *) malloc(sizeof(int) * (length_max + 1));
     model.lj_limit = (int *) malloc(sizeof(int) * (length_max + 1));
-    i = 0;
-    j = 0;
-    while(i < length_max){
-        k = 0;
-        model.offset_l[i] = j + 1;
-        while(model_input.list[j].length == (i + 1)){
-            k++;
-            j++;
+    length = 0;
+    current_offset = 0;
+    // For each length work out the values
+    while(length < length_max){
+        no_words = 0;
+        model.offset_l[length] = current_offset + 1;
+        // While there are more values of this length add to current_offset and no_words
+        while(model_input.list[current_offset].length == (length + 1)){
+            no_words++;
+            current_offset++;
         }
-        model.no_words[i] = k;
-        if(i == 0){
-            model.base_l[i] = 0;
+        // Add the no_words to this level of the model
+        model.no_words[length] = no_words;
+        // Calculate the Base_l
+        if(length == 0){
+            model.base_l[length] = 0;
         }else{
-            model.base_l[i] = 2 * (model.base_l[i - 1] + model.no_words[i - 1]);
+            model.base_l[length] = 2 * (model.base_l[length - 1] + model.no_words[length - 1]);
         }
-        if ((i + 1) == length_max){
-            model.lj_limit[i] = pow(2, length_max);
+        // Calculate the lj_limit
+        if ((length + 1) == length_max){
+            model.lj_limit[length] = pow(2, length_max);
         }else{
-            next_base = 2 * (model.base_l[i] + model.no_words[i]);
-            L_minus_l_minus_1 = length_max - (i+1) - 1;
+            next_base = 2 * (model.base_l[length] + model.no_words[length]);
+            L_minus_l_minus_1 = length_max - (length + 1) - 1;
             lj_limit = (next_base * pow(2, L_minus_l_minus_1));
-            model.lj_limit[i] = lj_limit;
+            model.lj_limit[length] = lj_limit;
         }
-        i++;
+        length++;
     }
+    // Values for the final level of the model (ie 1 beyond the largest codeword length)
     model.no_words[length_max] = 0;
     model.base_l[length_max] = 2 * (model.base_l[length_max - 1] + model.no_words[length_max - 1]);
-    model.offset_l[length_max] = j + 1;
+    model.offset_l[length_max] = current_offset + 1;
     model.lj_limit[length_max] = 0;
     return model;
 }
 
 void print_model(struct model model){
+    // Print the model for debugging
     int i;
     i = 0;
     printf("=======================\n");
@@ -158,6 +199,7 @@ void print_model(struct model model){
 
 
 void print_model_input(struct model_input model_input){
+    // Print the model for debugging
     int i;
     printf("=======================\n");
     printf("no_symbols -> %d\n", model_input.no_symbols);
@@ -173,15 +215,19 @@ void print_model_input(struct model_input model_input){
 }
 
 void write_model_input_to_file(struct model_input model_input, FILE * output_file_pointer){
+    // Write the model_input to the file so the decodeder can read it
     int no_symbols;
     int message_length;
     int i;
     struct symbol_length_pair sl_pair;
+    // Get and write out the message length and no. symbols first so that the decoder knows how large the 
+    // model input is and can accurately read it
     message_length = model_input.message_length;
     fwrite(&message_length, sizeof(int), 1, output_file_pointer);
     no_symbols = model_input.no_symbols;
     fwrite(&no_symbols, sizeof(int), 1, output_file_pointer);
     i = 0;
+    // While there are still symbols left write out their value and length
     while(i < no_symbols){
         sl_pair = model_input.list[i];
         fwrite(&(sl_pair.symbol), sizeof(int), 1, output_file_pointer);
@@ -191,16 +237,20 @@ void write_model_input_to_file(struct model_input model_input, FILE * output_fil
     fflush(output_file_pointer);
 }
 struct model_input read_model_input_from_file(FILE * input_file_ptr){
+    // Read the model_input from the file as set by the encoder
     struct model_input model_input;
     int temp;
     int i;
     struct symbol_length_pair sl_pair;
     fread(&temp, sizeof(int), 1, input_file_ptr);
+    // Get the message length and no. symbols first so that the decoder knows how large the 
+    // model input is and can accurately read it
     model_input.message_length = temp;
     fread(&temp, sizeof(int), 1, input_file_ptr);
     model_input.no_symbols = temp;
     model_input.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair) * temp);
     i = 0;
+    // While there are still symbols left read in their value and length
     while(i < model_input.no_symbols){
         fread(&temp, sizeof(int), 1, input_file_ptr);
         sl_pair.symbol = temp;
