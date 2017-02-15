@@ -1,5 +1,6 @@
 #include "main.h"
 int main ( int argc, char *argv[] ){
+    // Parse command args
     int state = parse_commandline_args(argc, argv);
     int verbose = 0;
     if (state == -1){
@@ -17,6 +18,7 @@ int main ( int argc, char *argv[] ){
     }
 }
 int parse_commandline_args(int argc, char *argv[]){
+    // Parse the command line arguments to the program
     int state = -1;
     if (argc >= 4){
         //verbose hasnt been specified so should only be 3 inputs
@@ -37,6 +39,7 @@ int parse_commandline_args(int argc, char *argv[]){
     return state;
 }
 void print_bad_input_message(char *message){
+    // Write out the error message if bad input
     printf("Error: '%s' input incorrectly formatted!\n", message);
     printf("For compression format as such:\n");
     printf("   %s -c [--verbose|-v] <infile> <outfile>\n", message);
