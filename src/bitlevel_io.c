@@ -28,8 +28,8 @@ size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, stru
             no_bytes_written = no_bytes_written + 1;
             byte = write_object.value >> (write_object.length - 8);
             fwrite(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
-            write_object.length = write_object.length - 8;
             write_object.value = write_object.value - (byte << (write_object.length - 8));
+            write_object.length = write_object.length - 8;
         }
         bitlevel_file_pointer->buffer = write_object.value;
         bitlevel_file_pointer->current_length = write_object.length;
