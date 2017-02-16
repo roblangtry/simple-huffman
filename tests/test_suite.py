@@ -244,7 +244,7 @@ class TestOrderedFiles(unittest.TestCase):
         log.debug('Decompressed size -> %d B' % decompressed_size)
         log.debug('Decompression time -> %s' % decompression_duration)
 
-    def test_large(self):
+    def skip_test_large(self):
         filename = 'large.temp'
         log=logging.getLogger('Ordered.large')
         # get the uncompressed size
