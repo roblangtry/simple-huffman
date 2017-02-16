@@ -3,6 +3,8 @@
 #include <math.h>
 #include "huffman.h"
 #include "symbols.h"
+#include "bitlevel_io.h"
+#include "elias.h"
 #ifndef MODEL_CODE
 #define MODEL_CODE
 struct model_input {

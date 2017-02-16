@@ -220,21 +220,23 @@ void write_model_input_to_file(struct model_input model_input, FILE * output_fil
     int message_length;
     int i;
     struct symbol_length_pair sl_pair;
+    struct bitlevel_file_pointer * bl_file_output_ptr;
+    bl_file_output_ptr = get_bitlevel_file_pointer(output_file_pointer);
     // Get and write out the message length and no. symbols first so that the decoder knows how large the 
     // model input is and can accurately read it
     message_length = model_input.message_length;
-    fwrite(&message_length, sizeof(int), 1, output_file_pointer);
+    write_elias_value(bl_file_output_ptr, message_length);
     no_symbols = model_input.no_symbols;
-    fwrite(&no_symbols, sizeof(int), 1, output_file_pointer);
+    write_elias_value(bl_file_output_ptr, no_symbols);
     i = 0;
     // While there are still symbols left write out their value and length
     while(i < no_symbols){
         sl_pair = model_input.list[i];
-        fwrite(&(sl_pair.symbol), sizeof(int), 1, output_file_pointer);
-        fwrite(&(sl_pair.length), sizeof(int), 1, output_file_pointer);
+        write_elias_value(bl_file_output_ptr, sl_pair.symbol);
+        write_elias_value(bl_file_output_ptr, sl_pair.length);
         i++;
     }
-    fflush(output_file_pointer);
+    bitlevel_flush(bl_file_output_ptr);
 }
 struct model_input read_model_input_from_file(FILE * input_file_ptr){
     // Read the model_input from the file as set by the encoder
@@ -242,19 +244,21 @@ struct model_input read_model_input_from_file(FILE * input_file_ptr){
     int temp;
     int i;
     struct symbol_length_pair sl_pair;
-    fread(&temp, sizeof(int), 1, input_file_ptr);
+    struct bitlevel_file_pointer * bl_file_input_ptr;
+    bl_file_input_ptr = get_bitlevel_file_pointer(input_file_ptr);
+    temp = read_elias_value(bl_file_input_ptr);
     // Get the message length and no. symbols first so that the decoder knows how large the 
     // model input is and can accurately read it
     model_input.message_length = temp;
-    fread(&temp, sizeof(int), 1, input_file_ptr);
+    temp = read_elias_value(bl_file_input_ptr);
     model_input.no_symbols = temp;
     model_input.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair) * temp);
     i = 0;
     // While there are still symbols left read in their value and length
     while(i < model_input.no_symbols){
-        fread(&temp, sizeof(int), 1, input_file_ptr);
+        temp = read_elias_value(bl_file_input_ptr);
         sl_pair.symbol = temp;
-        fread(&temp, sizeof(int), 1, input_file_ptr);
+        temp = read_elias_value(bl_file_input_ptr);
         sl_pair.length = temp;
         model_input.list[i] = sl_pair;
         i++;
