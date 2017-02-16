@@ -67,20 +67,20 @@ struct huffman_tree_node * get_smallest_node(struct huffman_tree_node * leaf_nod
     if((*length_leaf_nodes_list) == 0){
         // If there are no leaves take the smallest packaged node
         // then shuffle the rest forward
-        yield_from_package(packaged_node_pointers, length_packaged_list);
+        return yield_from_package(packaged_node_pointers, length_packaged_list);
     } else if((*length_packaged_list) == 0){
         // If there are no packaged nodes take the smallest leaf node
-        yield_from_leaf(leaf_nodes, length_leaf_nodes_list);
+        return yield_from_leaf(leaf_nodes, length_leaf_nodes_list);
     } else {
         // Get the frequencies from the two lowest frequency elements
         f1 = packaged_node_pointers[0]->frequency;
         f2 = leaf_nodes[(*length_leaf_nodes_list) - 1].frequency;
         if(f1 > f2){
             // If the leaf node has a lower frequency return that
-            yield_from_leaf(leaf_nodes, length_leaf_nodes_list);
+            return yield_from_leaf(leaf_nodes, length_leaf_nodes_list);
         } else {
             // Else return the packaged node pointer
-            yield_from_package(packaged_node_pointers, length_packaged_list);
+            return yield_from_package(packaged_node_pointers, length_packaged_list);
         }
     }
 }
