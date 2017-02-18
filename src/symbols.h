@@ -22,4 +22,5 @@ void add_to_probability_list(struct probability_list * list, int value);
 int compare_probability (const void * a, const void * b);
 void sort_symbol_probabilities(struct probability_list * list);
 void print_symbol_frequencies(struct probability_list list);
+void free_probability_list(struct probability_list list);
 #endif

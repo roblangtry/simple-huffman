@@ -3,7 +3,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     FILE *input_file_pointer;
     FILE *output_file_pointer;
     struct probability_list list;
-    struct huffman_tree_node huffman_root;
+    struct huffman_root_holder huffman_root;
     struct model_input model_input;
     struct model model;
     input_file_pointer = fopen(input_filename, "r");
@@ -17,10 +17,10 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     // Create a huffman binary tree from the list
     huffman_root = create_huffman_tree(list);
     if (verbose_flag == 1)
-        print_huffman_tree(huffman_root, 0);
+        print_huffman_tree(*huffman_root.root, 0);
     // Create the model_input struct to be transmitted between encoder and decoder
     // is used to create the model
-    model_input = create_model_input(huffman_root);
+    model_input = create_model_input(*huffman_root.root);
     if (verbose_flag == 1)
         print_model_input(model_input);
     // Create the model from the model_input
@@ -33,6 +33,10 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     rewind(input_file_pointer);
     // Read the input file and write the compressed file
     write_compressed_file(input_file_pointer, output_file_pointer, model);
+    free_huffman_root(huffman_root);
+    free_model(model);
+    free_model_input(model_input);
+    free_probability_list(list);
     // Close both file pointers
     fclose(input_file_pointer);
     fclose(output_file_pointer);
@@ -54,6 +58,7 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
     }
     // Flush the file pointer to ensure all info written
     bitlevel_flush(bitlevel_file_pointer);
+    free(bitlevel_file_pointer);
 }
 struct bitlevel_object calculate_write_object(int value, struct model model){
     int offset;

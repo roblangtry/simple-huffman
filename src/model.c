@@ -57,6 +57,7 @@ struct model_input create_model_input(struct huffman_tree_node root){
     model_input = recursive_codeword_length(root, 0);
     // The frequency of the root node is the total number of symbols in the file
     model_input.message_length = root.frequency;
+    model_input.anchor = model_input.list;
     // Sort the model_input list so it has highest frequency elements at the 'top'(0 offset)
     qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
     return model_input;
@@ -143,7 +144,7 @@ struct model create_model(struct model_input model_input){
         no_words = 0;
         model.offset_l[length] = current_offset + 1;
         // While there are more values of this length add to current_offset and no_words
-        while(model_input.list[current_offset].length == (length + 1)){
+        while(current_offset < model_input.no_symbols && model_input.list[current_offset].length == (length + 1)){
             no_words++;
             current_offset++;
         }
@@ -264,4 +265,17 @@ struct model_input read_model_input_from_file(FILE * input_file_ptr){
         i++;
     }
     return model_input;
+}
+
+
+void free_model(struct model model){
+    free(model.no_words);
+    free(model.base_l);
+    free(model.offset_l);
+    free(model.lj_limit);
+    free(model.binary_search_table);
+    free(model.symbols);
+}
+void free_model_input(struct model_input model_input){
+    free(model_input.anchor);
 }

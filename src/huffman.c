@@ -84,22 +84,28 @@ struct huffman_tree_node * get_smallest_node(struct huffman_tree_node * leaf_nod
         }
     }
 }
-struct huffman_tree_node create_huffman_tree(struct probability_list list){
+struct huffman_root_holder create_huffman_tree(struct probability_list list){
     // Take the probability list and create a huffman tree
     int length_leaf_nodes_list;
     int length_packaged_list;
     int memory_allocated_packaged_list;
+    int allocated_packaged_ordered_list;
     struct huffman_tree_node * leaf_nodes;
     struct huffman_tree_node * last;
     struct huffman_tree_node * second_last;
     struct huffman_tree_node * new_node;
+    struct huffman_tree_node * root;
     struct huffman_tree_node ** packaged_node_pointers;
+    struct huffman_tree_node ** ordered_packaged_node_pointers;
+    struct huffman_root_holder holder;
     // Create the leaf nodes from the probability list
     leaf_nodes = initialise_huffman_tree(list);
     length_leaf_nodes_list = list.list_length;
     //setup packaged node list
     packaged_node_pointers = malloc(sizeof(struct huffman_tree_node *));
     memory_allocated_packaged_list = 1;
+    ordered_packaged_node_pointers = malloc(sizeof(struct huffman_tree_node *));
+    allocated_packaged_ordered_list = 0;
     length_packaged_list = 0;
     // While their are more than one nodes left combine nodes together
     // eventually coalesing into 1 node that contains pointers that can lead to
@@ -112,16 +118,25 @@ struct huffman_tree_node create_huffman_tree(struct probability_list list){
         new_node = package_huffman_nodes(second_last, last);
         // Add that node to the end of the packaged node list (thereby maintaining its ordering)
         packaged_node_pointers[length_packaged_list] = new_node;
+        ordered_packaged_node_pointers[allocated_packaged_ordered_list] = new_node;
         length_packaged_list++;
+        allocated_packaged_ordered_list++;
         if(length_packaged_list == memory_allocated_packaged_list){
             // If the packaged node list has run out of memory just double it to save on lots of partial memory allocations
             packaged_node_pointers = (struct huffman_tree_node **) realloc(packaged_node_pointers, sizeof(struct huffman_tree_node *) * 2 * memory_allocated_packaged_list);
+            ordered_packaged_node_pointers = (struct huffman_tree_node **) realloc(ordered_packaged_node_pointers, sizeof(struct huffman_tree_node *) * 2 * (memory_allocated_packaged_list + allocated_packaged_ordered_list));
             memory_allocated_packaged_list = memory_allocated_packaged_list * 2;
         }
     }
     // Return the head of the packaged node list as this is currently the root
     // of a huffman tree
-    return (*packaged_node_pointers[0]);
+    root = &(*packaged_node_pointers[0]);
+    free(packaged_node_pointers);
+    holder.root = root;
+    holder.package_root = ordered_packaged_node_pointers;
+    holder.no_package = allocated_packaged_ordered_list;
+    holder.leaf_root = leaf_nodes;
+    return holder;
 }
 
 void print_huffman_tree(struct huffman_tree_node node, int level){
@@ -155,4 +170,15 @@ void move_forward_list(struct huffman_tree_node **package_pointers, int package_
         package_pointers[index] = package_pointers[index + 1];
         index++;
     }
+}
+
+void free_huffman_root(struct huffman_root_holder root){
+    int i;
+    i=0;
+    while(i < root.no_package){
+        free(root.package_root[i]);
+        i++;
+    }
+    free(root.leaf_root);
+    free(root.package_root);
 }

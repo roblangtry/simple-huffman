@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include "huffman.h"
@@ -8,6 +9,7 @@
 #ifndef MODEL_CODE
 #define MODEL_CODE
 struct model_input {
+    struct symbol_length_pair * anchor;
     int message_length;
     int no_symbols;
     struct symbol_length_pair * list;
@@ -38,4 +40,6 @@ void print_model(struct model model);
 void print_model_input(struct model_input model_input);
 void write_model_input_to_file(struct model_input model_input, FILE * output_file_pointer);
 struct model_input read_model_input_from_file(FILE * input_filename);
+void free_model(struct model model);
+void free_model_input(struct model_input model_input);
 #endif
