@@ -16,6 +16,8 @@ int run_decompression(char *input_filename, char *output_filename, int verbose_f
         print_model(model);
     // Use the model to read the input file and create the decompressed output file
     write_decompressed_file(input_file_pointer, output_file_pointer, model);
+    free_model(model);
+    free_model_input(model_input);
     // Close the file pointers
     fclose(input_file_pointer);
     fclose(output_file_pointer);
@@ -57,4 +59,5 @@ void write_decompressed_file(FILE * input_file_pointer, FILE * output_file_point
         // Increment the amount of symbols processed
         no_symbols_processed++;
     }
+    free(bitlevel_file_pointer);
 }

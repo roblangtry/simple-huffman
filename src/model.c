@@ -235,6 +235,7 @@ struct model_input read_model_input_from_file(FILE * input_file_ptr){
     temp = read_elias_value(bl_file_input_ptr);
     model_input.no_symbols = temp;
     model_input.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair) * temp);
+    model_input.anchor = model_input.list;
     i = 0;
     // While there are still symbols left read in their value and length
     while(i < model_input.no_symbols){
@@ -245,6 +246,7 @@ struct model_input read_model_input_from_file(FILE * input_file_ptr){
         model_input.list[i] = sl_pair;
         i++;
     }
+    free(bl_file_input_ptr);
     return model_input;
 }
 
