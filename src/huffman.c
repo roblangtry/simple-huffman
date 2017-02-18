@@ -131,6 +131,7 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
     // Return the head of the packaged node list as this is currently the root
     // of a huffman tree
     root = &(*packaged_node_pointers[0]);
+    // Free pointers list
     free(packaged_node_pointers);
     holder.root = root;
     holder.package_root = ordered_packaged_node_pointers;
@@ -175,10 +176,13 @@ void move_forward_list(struct huffman_tree_node **package_pointers, int package_
 void free_huffman_root(struct huffman_root_holder root){
     int i;
     i=0;
+    // Free the internal nodes of the huffman tree
     while(i < root.no_package){
         free(root.package_root[i]);
         i++;
     }
+    // Free the leaf nodes
     free(root.leaf_root);
+    // Free the pointer list in the huffman root
     free(root.package_root);
 }

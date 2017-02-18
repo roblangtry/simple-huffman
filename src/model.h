@@ -9,7 +9,6 @@
 #ifndef MODEL_CODE
 #define MODEL_CODE
 struct model_input {
-    struct symbol_length_pair * anchor;
     int message_length;
     int no_symbols;
     struct symbol_length_pair * list;

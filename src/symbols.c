@@ -105,5 +105,6 @@ void print_symbol_frequencies(struct probability_list list){
     printf("=======================\n");
 }
 void free_probability_list(struct probability_list list){
+    // Free the list of the probability list
     free(list.list);
 }

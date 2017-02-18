@@ -33,6 +33,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     rewind(input_file_pointer);
     // Read the input file and write the compressed file
     write_compressed_file(input_file_pointer, output_file_pointer, model);
+    // Free the memory of structs
     free_huffman_root(huffman_root);
     free_model(model);
     free_model_input(model_input);
@@ -58,6 +59,7 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
     }
     // Flush the file pointer to ensure all info written
     bitlevel_flush(bitlevel_file_pointer);
+    // Free the bitlevel_file_pointer
     free(bitlevel_file_pointer);
 }
 struct bitlevel_object calculate_write_object(int value, struct model model){
