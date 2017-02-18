@@ -6,7 +6,6 @@ struct model_input recursive_codeword_length(struct huffman_tree_node node, int 
     // A recursive function to map the depth of the huffman tree (as lengths)
     struct model_input this_mi, left_mi, right_mi;
     struct symbol_length_pair sl_pair;
-    int i;
     sl_pair.symbol = node.value;
     sl_pair.length = level;
     if(node.right == NULL && node.left == NULL){
@@ -14,38 +13,19 @@ struct model_input recursive_codeword_length(struct huffman_tree_node node, int 
         this_mi.no_symbols = 1;
         this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
         this_mi.list[0] = sl_pair;
-    } else {
-        // This is not a leaf node so set everything as zero
-        this_mi.no_symbols = 0;
-        this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair));
-    }
-    if(node.right != NULL){
-        // If the right node isn't NULL run recursive on it
+    } else if (node.right == NULL){
+        return recursive_codeword_length(*(node.right), level + 1);
+    } else if (node.left == NULL){
+        return recursive_codeword_length(*(node.left), level + 1);
+    } else{
         right_mi = recursive_codeword_length(*(node.right), level + 1);
-        // Setup the list to have enough room for all lower symbols
-        this_mi.list = realloc(this_mi.list, sizeof(struct symbol_length_pair) * (this_mi.no_symbols + right_mi.no_symbols));
-        i = 0;
-        // While there are still symbols in the lower model input read them
-        // into this model input
-        while (i < right_mi.no_symbols){
-            this_mi.list[this_mi.no_symbols + i] = right_mi.list[i];
-            i++;
-        }
-        this_mi.no_symbols = this_mi.no_symbols + right_mi.no_symbols;
-    }
-    if(node.left != NULL){
-        // If the left node isn't NULL run recursive on it
         left_mi = recursive_codeword_length(*(node.left), level + 1);
-        // Setup the list to have enough room for all lower symbols and existing symbols
-        this_mi.list = realloc(this_mi.list, sizeof(struct symbol_length_pair) * (this_mi.no_symbols + left_mi.no_symbols));
-        i = 0;
-        // While there are still symbols in the lower model input read them
-        // into this model input
-        while (i < left_mi.no_symbols){
-            this_mi.list[this_mi.no_symbols + i] = left_mi.list[i];
-            i++;
-        }
-        this_mi.no_symbols = this_mi.no_symbols + left_mi.no_symbols;
+        this_mi.no_symbols = right_mi.no_symbols + left_mi.no_symbols;
+        this_mi.list = (struct symbol_length_pair *) malloc(sizeof(struct symbol_length_pair) * this_mi.no_symbols);
+        memcpy(this_mi.list, right_mi.list, sizeof(struct symbol_length_pair) * right_mi.no_symbols);
+        memcpy(&(this_mi.list[right_mi.no_symbols]), left_mi.list, sizeof(struct symbol_length_pair) * left_mi.no_symbols);
+        free(right_mi.list);
+        free(left_mi.list);
     }
     return this_mi;
 }
@@ -238,6 +218,7 @@ void write_model_input_to_file(struct model_input model_input, FILE * output_fil
         i++;
     }
     bitlevel_flush(bl_file_output_ptr);
+    free(bl_file_output_ptr);
 }
 struct model_input read_model_input_from_file(FILE * input_file_ptr){
     // Read the model_input from the file as set by the encoder
