@@ -67,20 +67,9 @@ struct probability_list initialise_probabilities_list(FILE * input_file_pointer,
     unsigned char c_value;
     struct probability_list list;
     struct probability_point point;
-    // Read in the first value of the list so we can assign it
-    if (general == 0){
-        fscanf(input_file_pointer, "%d\n", &value);
-    } else {
-        fread(&c_value, sizeof(char), 1, input_file_pointer);
-        value = c_value;
-    }
-    // Setup the probability point
-    point.value = value;
-    point.occurrences = 1;
     // Setup the list assigning enough memory for first element
-    list.list_length = 1;
+    list.list_length = 0;
     list.list = malloc(sizeof(struct probability_point));
-    list.list[0] = point;
     return list;
 }
 void add_to_probability_list(struct probability_list * list, struct probability_point point){
