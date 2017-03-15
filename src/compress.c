@@ -17,7 +17,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     // Create a huffman binary tree from the list
     huffman_root = create_huffman_tree(list);
     if (verbose_flag == 1)
-        print_huffman_tree(*huffman_root.root, 0);
+        print_huffman_tree(huffman_root.root, 0);
     // Create the model_input struct to be transmitted between encoder and decoder
     // is used to create the model
     model_input = create_model_input(*huffman_root.root);

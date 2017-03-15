@@ -40,15 +40,13 @@ struct huffman_tree_node * package_huffman_nodes(struct huffman_tree_node * righ
     new_node->left = left;
     return new_node;
 }
-struct huffman_tree_node * yield_from_package(struct huffman_tree_node ** packaged_node_pointers, int * length_packaged_list){
+struct huffman_tree_node * yield_from_package(struct huffman_tree_node ** ordered_packaged_node_pointers, int * length_packaged_list, int * length_ordered_packaged_list){
     // Yield the lowest frequency element from the huffman tree node list
     // and move the rest of the list up
     struct huffman_tree_node * ptr;
     // Get the pointer of the first (and given the sorted nature the
     // least frequent node)
-    ptr = packaged_node_pointers[0];
-    // Move the list forward
-    move_forward_list(packaged_node_pointers, (*length_packaged_list));
+    ptr = ordered_packaged_node_pointers[*length_ordered_packaged_list - *length_packaged_list];
     // Lower the length of the list
     (*length_packaged_list) = (*length_packaged_list) - 1;
     // Return the pointer
@@ -60,27 +58,27 @@ struct huffman_tree_node * yield_from_leaf(struct huffman_tree_node * leaf_nodes
     (*length_leaf_nodes_list) = (*length_leaf_nodes_list) - 1;
     return &(leaf_nodes[(*length_leaf_nodes_list)]);
 }
-struct huffman_tree_node * get_smallest_node(struct huffman_tree_node * leaf_nodes, int * length_leaf_nodes_list, struct huffman_tree_node ** packaged_node_pointers, int * length_packaged_list){
+struct huffman_tree_node * get_smallest_node(struct huffman_tree_node * leaf_nodes, int * length_leaf_nodes_list, struct huffman_tree_node ** ordered_packaged_node_pointers, int * length_packaged_list, int * length_ordered_packaged_list){
     // Given the leaf nodes and the packaged(composite) nodes find the smallest
     // node and return it
     int f1, f2;
     if((*length_leaf_nodes_list) == 0){
         // If there are no leaves take the smallest packaged node
         // then shuffle the rest forward
-        return yield_from_package(packaged_node_pointers, length_packaged_list);
+        return yield_from_package(ordered_packaged_node_pointers, length_packaged_list, length_ordered_packaged_list);
     } else if((*length_packaged_list) == 0){
         // If there are no packaged nodes take the smallest leaf node
         return yield_from_leaf(leaf_nodes, length_leaf_nodes_list);
     } else {
         // Get the frequencies from the two lowest frequency elements
-        f1 = packaged_node_pointers[0]->frequency;
+        f1 = ordered_packaged_node_pointers[*length_ordered_packaged_list - *length_packaged_list]->frequency;
         f2 = leaf_nodes[(*length_leaf_nodes_list) - 1].frequency;
         if(f1 > f2){
             // If the leaf node has a lower frequency return that
             return yield_from_leaf(leaf_nodes, length_leaf_nodes_list);
         } else {
             // Else return the packaged node pointer
-            return yield_from_package(packaged_node_pointers, length_packaged_list);
+            return yield_from_package(ordered_packaged_node_pointers, length_packaged_list, length_ordered_packaged_list);
         }
     }
 }
@@ -98,6 +96,7 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
     struct huffman_tree_node ** packaged_node_pointers;
     struct huffman_tree_node ** ordered_packaged_node_pointers;
     struct huffman_root_holder holder;
+    int testing;
     // Create the leaf nodes from the probability list
     leaf_nodes = initialise_huffman_tree(list);
     length_leaf_nodes_list = list.list_length;
@@ -112,8 +111,8 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
     // any of the leaf nodes
     while((length_leaf_nodes_list + length_packaged_list) > 1){
         // Get the two smallest nodes
-        last = get_smallest_node(leaf_nodes, &length_leaf_nodes_list, packaged_node_pointers, &length_packaged_list);
-        second_last = get_smallest_node(leaf_nodes, &length_leaf_nodes_list, packaged_node_pointers, &length_packaged_list);
+        last = get_smallest_node(leaf_nodes, &length_leaf_nodes_list, ordered_packaged_node_pointers, &length_packaged_list, &allocated_packaged_ordered_list);
+        second_last = get_smallest_node(leaf_nodes, &length_leaf_nodes_list, ordered_packaged_node_pointers, &length_packaged_list, &allocated_packaged_ordered_list);
         // Package them together into a single node
         new_node = package_huffman_nodes(second_last, last);
         // Add that node to the end of the packaged node list (thereby maintaining its ordering)
@@ -121,7 +120,7 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
         ordered_packaged_node_pointers[allocated_packaged_ordered_list] = new_node;
         length_packaged_list++;
         allocated_packaged_ordered_list++;
-        if(length_packaged_list == memory_allocated_packaged_list){
+        if(allocated_packaged_ordered_list == memory_allocated_packaged_list){
             // If the packaged node list has run out of memory just double it to save on lots of partial memory allocations
             packaged_node_pointers = (struct huffman_tree_node **) realloc(packaged_node_pointers, sizeof(struct huffman_tree_node *) * 2 * memory_allocated_packaged_list);
             ordered_packaged_node_pointers = (struct huffman_tree_node **) realloc(ordered_packaged_node_pointers, sizeof(struct huffman_tree_node *) * 2 * (memory_allocated_packaged_list + allocated_packaged_ordered_list));
@@ -130,17 +129,18 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
     }
     // Return the head of the packaged node list as this is currently the root
     // of a huffman tree
-    root = &(*packaged_node_pointers[0]);
+    root = packaged_node_pointers[0];
     // Free pointers list
     free(packaged_node_pointers);
     holder.root = root;
+    //print_huffman_tree(root, 0);
     holder.package_root = ordered_packaged_node_pointers;
     holder.no_package = allocated_packaged_ordered_list;
     holder.leaf_root = leaf_nodes;
     return holder;
 }
 
-void print_huffman_tree(struct huffman_tree_node node, int level){
+void print_huffman_tree(struct huffman_tree_node * node, int level){
     // Print the huffman tree for debugging
     int i;
     if(level == 0){
@@ -148,17 +148,14 @@ void print_huffman_tree(struct huffman_tree_node node, int level){
         printf("Huffman Tree\n");
         printf("=======================\n");
     }
-    i = 0;
-    while(i < level){
-        printf(" ");
-        i++;
+    printf("%p - ", node);
+    printf("<%p,%p> ", node->right, node->left);
+    printf("%d-%d\n", node->frequency, node->value);
+    if(node->right != NULL){
+        print_huffman_tree(node->right, level + 1);
     }
-    printf("%d-%d\n", node.frequency, node.value);
-    if(node.right != NULL){
-        print_huffman_tree(*(node.right), level + 1);
-    }
-    if(node.left != NULL){
-        print_huffman_tree(*(node.left), level + 1);
+    if(node->left != NULL){
+        print_huffman_tree(node->left, level + 1);
     }
     if(level == 0){
         printf("=======================\n");
@@ -171,6 +168,7 @@ void move_forward_list(struct huffman_tree_node **package_pointers, int package_
         package_pointers[index] = package_pointers[index + 1];
         index++;
     }
+    package_pointers[index] = NULL;
 }
 
 void free_huffman_root(struct huffman_root_holder root){
