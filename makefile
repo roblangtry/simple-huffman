@@ -1,5 +1,5 @@
 EXECUTABLE_NAME = program
-CFLAGS = -Wall -pedantic
+CFLAGS = -Wall -pedantic -O3
 
 prepare_tests:
 	echo "$(EXECUTABLE_NAME).out" > tests/test.temp
