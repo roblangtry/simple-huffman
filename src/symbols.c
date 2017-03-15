@@ -8,25 +8,40 @@ int compare_symbol_length (const void * a, const void * b)
     value_b = (*(struct probability_point*)b).occurrences;
     return (value_a - value_b);
 }
-struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer){
+struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer, int general){
     // Read the input file and add the symbol probabilities to the probability list
     int temp_value;
+    char c_value;
     struct probability_list list;
     // Initialise_the probability list
-    list = initialise_probabilities_list(input_file_pointer);
+    list = initialise_probabilities_list(input_file_pointer, general);
     // While there are symbols to read; read them.
-    while (fscanf(input_file_pointer, "%d\n", &temp_value) != EOF) {
-        // Add the read value to the proabability list
-        add_to_probability_list(&list, temp_value);
+    if(general == 0){
+        while (fscanf(input_file_pointer, "%d\n", &temp_value) != EOF) {
+            // Add the read value to the proabability list
+            add_to_probability_list(&list, temp_value);
+        }
+    } else{
+        while (fread(&c_value, sizeof(char), 1, input_file_pointer) == 1) {
+            // Add the read value to the proabability list
+            temp_value = c_value;
+            add_to_probability_list(&list, temp_value);
+        }
     }
     return list;
 }
-struct probability_list initialise_probabilities_list(FILE * input_file_pointer){
+struct probability_list initialise_probabilities_list(FILE * input_file_pointer, int general){
     int value;
+    char c_value;
     struct probability_list list;
     struct probability_point point;
     // Read in the first value of the list so we can assign it
-    fscanf(input_file_pointer, "%d\n", &value);
+    if (general == 0){
+        fscanf(input_file_pointer, "%d\n", &value);
+    } else {
+        fread(&c_value, sizeof(char), 1, input_file_pointer);
+        value = c_value;
+    }
     // Setup the probability point
     point.value = value;
     point.occurrences = 1;

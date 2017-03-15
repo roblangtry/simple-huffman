@@ -1,5 +1,5 @@
 #include "compress.h"
-int run_compression(char *input_filename, char *output_filename, int verbose_flag){
+int run_compression(char *input_filename, char *output_filename, int verbose_flag, int general){
     FILE *input_file_pointer;
     FILE *output_file_pointer;
     struct probability_list list;
@@ -9,7 +9,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     input_file_pointer = fopen(input_filename, "r");
     output_file_pointer = fopen(output_filename, "w");
     // Work out the probabilities of the symbol within the file
-    list = evaluate_symbol_probabilities(input_file_pointer);
+    list = evaluate_symbol_probabilities(input_file_pointer, general);
     // Sort the list so that most frequent is at 0
     sort_symbol_probabilities(&list);
     if (verbose_flag == 1)
@@ -32,7 +32,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     // Rewind the input file pointer so that we can read it again to write the compressed file
     rewind(input_file_pointer);
     // Read the input file and write the compressed file
-    write_compressed_file(input_file_pointer, output_file_pointer, model);
+    write_compressed_file(input_file_pointer, output_file_pointer, model, general);
     // Free the memory of structs
     free_huffman_root(huffman_root);
     free_model(model);
@@ -44,18 +44,30 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     return 1;
 }
 
-void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model){
+void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model, int general){
     int value;
+    char c_value;
     struct bitlevel_object write_object;
     struct bitlevel_file_pointer * bitlevel_file_pointer;
     // Create the bitlevel file pointer from the output file pointer
     bitlevel_file_pointer = get_bitlevel_file_pointer(output_file_pointer);
-    // While their is input to read
-    while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
-        // Use the model to create a bitlevel object representing value to be written
-        write_object = calculate_write_object(value, model);
-        // Write the object
-        bitlevel_write(bitlevel_file_pointer, write_object);
+    if(general == 0){
+        // While their is input to read
+        while (fscanf(input_file_pointer, "%d\n", &value) != EOF) {
+            // Use the model to create a bitlevel object representing value to be written
+            write_object = calculate_write_object(value, model);
+            // Write the object
+            bitlevel_write(bitlevel_file_pointer, write_object);
+        }
+    } else{
+        // While their is input to read
+        while (fread(&c_value, sizeof(char), 1, input_file_pointer) == 1) {
+            value = c_value;
+            // Use the model to create a bitlevel object representing value to be written
+            write_object = calculate_write_object(value, model);
+            // Write the object
+            bitlevel_write(bitlevel_file_pointer, write_object);
+        }
     }
     // Flush the file pointer to ensure all info written
     bitlevel_flush(bitlevel_file_pointer);
