@@ -46,7 +46,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
 
 void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model, int general){
     int value;
-    char c_value;
+    unsigned char c_value;
     struct bitlevel_object write_object;
     struct bitlevel_file_pointer * bitlevel_file_pointer;
     // Create the bitlevel file pointer from the output file pointer

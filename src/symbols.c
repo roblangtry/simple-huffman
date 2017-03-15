@@ -11,28 +11,60 @@ int compare_symbol_length (const void * a, const void * b)
 struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer, int general){
     // Read the input file and add the symbol probabilities to the probability list
     int temp_value;
-    char c_value;
+    unsigned char c_value;
     struct probability_list list;
+    struct probability_point point;
+    int * val_list;
+    int list_size, i;
     // Initialise_the probability list
+    val_list = malloc(sizeof(int));
     list = initialise_probabilities_list(input_file_pointer, general);
     // While there are symbols to read; read them.
+    list_size = 0;
     if(general == 0){
         while (fscanf(input_file_pointer, "%d\n", &temp_value) != EOF) {
             // Add the read value to the proabability list
-            add_to_probability_list(&list, temp_value);
+            //add_to_probability_list(&list, temp_value);
+            val_list = add_to_val_list(val_list, &list_size, temp_value);
         }
     } else{
         while (fread(&c_value, sizeof(char), 1, input_file_pointer) == 1) {
             // Add the read value to the proabability list
             temp_value = c_value;
-            add_to_probability_list(&list, temp_value);
+            //add_to_probability_list(&list, temp_value);
+            val_list = add_to_val_list(val_list, &list_size, temp_value);
         }
+    }
+    i = 0;
+    while(i < list_size){
+        if(val_list[i] > 0){
+            point.value = i;
+            point.occurrences = val_list[i];
+            add_to_probability_list(&list, point);
+        }
+        i++;
+    }
+    return list;
+}
+int * add_to_val_list(int * list, int * size, int value){
+    int i;
+    if(value >= *size){
+        i = *size;
+        *size = 10 * value + 1;
+        list = realloc(list, sizeof(int) * (*size));
+        while(i<*size){
+            list[i] = 0;
+            i++;
+        }
+        list[value]++;
+    } else{
+        list[value]++;
     }
     return list;
 }
 struct probability_list initialise_probabilities_list(FILE * input_file_pointer, int general){
     int value;
-    char c_value;
+    unsigned char c_value;
     struct probability_list list;
     struct probability_point point;
     // Read in the first value of the list so we can assign it
@@ -51,38 +83,14 @@ struct probability_list initialise_probabilities_list(FILE * input_file_pointer,
     list.list[0] = point;
     return list;
 }
-void add_to_probability_list(struct probability_list * list, int value){
+void add_to_probability_list(struct probability_list * list, struct probability_point point){
     // Add the given value to the probability list (using pointer for assignment)
-    int i;
-    int list_len;
-    int added;
-    struct probability_point point;
-    list_len = (*list).list_length;
-    i = 0;
-    added = 0;
-    // check to see if the value exists in the list already
-    while (i < list_len && added == 0){
-        point = (*list).list[i];
-        // If we have found the value add 1 to the number of times it has occurred
-        if(point.value == value){
-            point.occurrences = point.occurrences + 1;
-            added = 1;
-            (*list).list[i] = point;
-        }
-        i++;
-    }
-    // The value doesnt exist in the list so add it
-    if(added == 0){
-        // Add 1 to the list length
-        (*list).list_length = (*list).list_length + 1;
-        // Allocate more memory to the list
-        (*list).list = realloc((*list).list, sizeof(struct probability_point) * (*list).list_length);
-        // Setup the probability point
-        point.value = value;
-        point.occurrences = 1;
-        // Add the point the list
-        (*list).list[(*list).list_length - 1] = point;
-    }
+    // Add 1 to the list length
+    (*list).list_length = (*list).list_length + 1;
+    // Allocate more memory to the list
+    list->list = realloc(list->list, sizeof(struct probability_point) * list->list_length);
+    // Add the point the list
+    (*list).list[(*list).list_length - 1] = point;
 }
 
 int compare_probability (const void * a, const void * b)
