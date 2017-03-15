@@ -96,7 +96,6 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
     struct huffman_tree_node ** packaged_node_pointers;
     struct huffman_tree_node ** ordered_packaged_node_pointers;
     struct huffman_root_holder holder;
-    int testing;
     // Create the leaf nodes from the probability list
     leaf_nodes = initialise_huffman_tree(list);
     length_leaf_nodes_list = list.list_length;
@@ -142,15 +141,11 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
 
 void print_huffman_tree(struct huffman_tree_node * node, int level){
     // Print the huffman tree for debugging
-    int i;
     if(level == 0){
         printf("=======================\n");
         printf("Huffman Tree\n");
         printf("=======================\n");
     }
-    printf("%p - ", node);
-    printf("<%p,%p> ", node->right, node->left);
-    printf("%d-%d\n", node->frequency, node->value);
     if(node->right != NULL){
         print_huffman_tree(node->right, level + 1);
     }
