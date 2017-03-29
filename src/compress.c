@@ -45,8 +45,8 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
 }
 
 void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model, int general){
-    int value;
-    unsigned char c_value;
+    int value, i, alloted;
+    unsigned char c_value[2000];
     struct bitlevel_object write_object;
     struct bitlevel_file_pointer * bitlevel_file_pointer;
     // Create the bitlevel file pointer from the output file pointer
@@ -60,13 +60,18 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
             bitlevel_write(bitlevel_file_pointer, write_object);
         }
     } else{
-        // While their is input to read
-        while (fread(&c_value, sizeof(char), 1, input_file_pointer) == 1) {
-            value = c_value;
-            // Use the model to create a bitlevel object representing value to be written
-            write_object = calculate_write_object(value, model);
-            // Write the object
-            bitlevel_write(bitlevel_file_pointer, write_object);
+        alloted = fread(c_value, sizeof(char), 2000, input_file_pointer);
+        while (alloted > 0) {
+            i = 0;
+            while(i < alloted){
+                value = c_value[i];
+                // Use the model to create a bitlevel object representing value to be written
+                write_object = calculate_write_object(value, model);
+                // Write the object
+                bitlevel_write(bitlevel_file_pointer, write_object);
+                i++;
+            }
+            alloted = fread(c_value, sizeof(char), 2000, input_file_pointer);
         }
     }
     // Flush the file pointer to ensure all info written
