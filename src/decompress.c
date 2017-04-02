@@ -53,8 +53,10 @@ void write_decompressed_file(FILE * input_file_pointer, FILE * output_file_point
         // Write out that value to the output file
         if(general == 0){
             fprintf(output_file_pointer, "%d\n", model.symbols[symbol_offset-1]);
+        } else if(general == 1){
+            fwrite(&model.symbols[symbol_offset-1],sizeof(char),1,output_file_pointer);
         } else{
-            fprintf(output_file_pointer, "%c", (char)model.symbols[symbol_offset-1]);
+            fwrite(&model.symbols[symbol_offset-1],sizeof(unsigned int),1,output_file_pointer);
         }
         // Read into a buffer however many bits were digested in this iteration
         // of the decompression

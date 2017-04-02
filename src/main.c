@@ -8,6 +8,10 @@ int main ( int argc, char *argv[] ){
         print_bad_input_message(argv[0]);
         return -1;
     }
+    if (state >= 8){
+        general = 2;
+        state = state - 8;
+    }
     if (state >= 4){
         general = 1;
         state = state - 4;
@@ -38,6 +42,8 @@ int parse_commandline_args(int argc, char *argv[]){
             state = state + 2;
         } else if (strcmp("-g", argv[4]) == 0 || strcmp("--general", argv[4]) == 0){
             state = state + 4;
+        } else if (strcmp("-I", argv[4]) == 0 || strcmp("--integer", argv[4]) == 0){
+            state = state + 8;
         } else{
             state = -1;
         }
