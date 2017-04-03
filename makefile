@@ -15,6 +15,9 @@ do_tests: prepare_tests run_tests cleanup_tests
 build:
 	gcc $(CFLAGS) src/*.c -lm -o $(EXECUTABLE_NAME).out
 
+build_debug:
+	gcc $(CFLAGS) -g src/*.c -lm -o $(EXECUTABLE_NAME).out
+
 test: build do_tests
 
 default:
