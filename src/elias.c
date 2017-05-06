@@ -1,6 +1,6 @@
 #include "elias.h"
-struct bitlevel_object calculate_elias_value(int value){
-    int length;
+struct bitlevel_object calculate_elias_value(uint64_t value){
+    uint64_t length;
     struct bitlevel_object bl_obj;
     // get the largest length value such that 2^length =< value < 2^(length+1)
     length = (floor(log(value) / log(2)) * 2) + 1;
@@ -9,9 +9,9 @@ struct bitlevel_object calculate_elias_value(int value){
     bl_obj.length = length;
     return bl_obj;
 }
-void write_elias_value(struct bitlevel_file_pointer * file_pointer, int value){
+void write_elias_value(struct bitlevel_file_pointer * file_pointer, uint64_t value){
     struct bitlevel_object write_object;
-    int zero_component_length, value_component;
+    uint64_t zero_component_length, value_component;
     // This conditional code is to allow negatives and zero to work with the elias coding
     if(value < 0){
         // Value is negative so set signing bit to 1
@@ -27,7 +27,7 @@ void write_elias_value(struct bitlevel_file_pointer * file_pointer, int value){
         // add 1 to the value so that 0 is never encountered
         write_object = calculate_elias_value(value + 1);
     }
-    // Elias has this lovely habit of being larger than a 32 bit int in large files so 
+    // Elias has this lovely habit of being larger than a 32 bit uint64_t in large files so 
     // split out the zero component and write that then write the value component
     zero_component_length = (write_object.length - 1) / 2;
     value_component = write_object.value;
@@ -40,10 +40,10 @@ void write_elias_value(struct bitlevel_file_pointer * file_pointer, int value){
     write_object.length = zero_component_length + 1;
     bitlevel_write(file_pointer, write_object);
 }
-int read_elias_value(struct bitlevel_file_pointer * file_pointer){
-    int no_zeroes;
-    int value;
-    int negative_case;
+uint64_t read_elias_value(struct bitlevel_file_pointer * file_pointer){
+    uint64_t no_zeroes;
+    uint64_t value;
+    uint64_t negative_case;
     struct bitlevel_object read_object;
     // Read the signing bit
     read_object = bitlevel_read(file_pointer, 1);

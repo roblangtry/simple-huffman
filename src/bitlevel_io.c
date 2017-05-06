@@ -13,11 +13,11 @@ struct bitlevel_file_pointer * get_bitlevel_file_pointer(FILE * file_pointer){
 }
 size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, struct bitlevel_object write_object){
     // Write out bitlevel info
-    int bits_from_lbyte;
-    int bits_from_rbyte;
+    uint64_t bits_from_lbyte;
+    uint64_t bits_from_rbyte;
     size_t no_bytes_written;
     unsigned char byte;
-    int lbyte, rbyte;
+    uint64_t lbyte, rbyte;
     // If there is 8 or more bits then we can write out a byte
     if ((bitlevel_file_pointer->current_length + write_object.length) >= 8){
         // How many bits will be in the left byte component (from the buffer)
@@ -28,7 +28,7 @@ size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, stru
         lbyte = ((bitlevel_file_pointer->buffer) << bits_from_rbyte);
         // Get the (right) byte component from the write object
         rbyte = (unsigned char)(write_object.value >> (write_object.length - bits_from_rbyte));
-        // Combine the left and right components into a byte
+        // Combine the left and right components uint64_to a byte
         byte = (unsigned char)(lbyte + rbyte);
         // Amend the write object values to reflect what hasnt been written yet
         write_object.value = write_object.value - (rbyte << (write_object.length - bits_from_rbyte));
@@ -39,7 +39,7 @@ size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, stru
         // While there is still enough information in the write object to write a byte
         while(write_object.length >= 8){
             no_bytes_written = no_bytes_written + 1;
-            // Pull 8 more bits from the write object into a byte
+            // Pull 8 more bits from the write object uint64_to a byte
             byte = write_object.value >> (write_object.length - 8);
             // Write out that byte
             fwrite(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
@@ -58,7 +58,7 @@ size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, stru
     }
     return no_bytes_written;
 }
-struct bitlevel_object bitlevel_read(struct bitlevel_file_pointer * bitlevel_file_pointer, int length){
+struct bitlevel_object bitlevel_read(struct bitlevel_file_pointer * bitlevel_file_pointer, uint64_t length){
     // Read in bitlevel info from a file
     struct bitlevel_object bitlevel_object;
     unsigned char byte;
@@ -69,7 +69,7 @@ struct bitlevel_object bitlevel_read(struct bitlevel_file_pointer * bitlevel_fil
         // Read in a byte
         fread(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
         // Append the byte to the buffer and add 8 to the current length
-        bitlevel_file_pointer->buffer = (bitlevel_file_pointer->buffer << 8) + (int)byte;
+        bitlevel_file_pointer->buffer = (bitlevel_file_pointer->buffer << 8) + (uint64_t)byte;
         bitlevel_file_pointer->current_length = bitlevel_file_pointer->current_length + 8;
     }
     // Take the amount of requested info from the buffer and put it in the write object

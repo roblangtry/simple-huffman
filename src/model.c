@@ -1,7 +1,7 @@
 #include "model.h"
 
 
-struct model_input recursive_codeword_length(struct huffman_tree_node node, int level)
+struct model_input recursive_codeword_length(struct huffman_tree_node node, uint64_t level)
 {
     // A recursive function to map the depth of the huffman tree (as lengths)
     struct model_input this_mi, left_mi, right_mi;
@@ -41,20 +41,20 @@ struct model_input create_model_input(struct huffman_tree_node root){
     qsort(model_input.list, model_input.no_symbols, sizeof(struct symbol_length_pair), compare_symbol_length);
     return model_input;
 }
-int compare_symbol_offset (const void * a, const void * b)
+uint64_t compare_symbol_offset (const void * a, const void * b)
 {
     // Compare the symbol offset for qsort
-    int value_a, value_b;
+    uint64_t value_a, value_b;
     value_a = (*(struct symbol_offset*)a).symbol;
     value_b = (*(struct symbol_offset*)b).symbol;
     return (value_a - value_b);
 }
 void handle_symbol_data_for_model(struct model_input model_input, struct model * model_ptr){
-    int i = 0;
+    uint64_t i = 0;
     struct symbol_offset so_pair;
     // Allocate enough memory for the binary search table and symbols
     model_ptr->binary_search_table = malloc(sizeof(size_t) * MAX_SYMBOL);
-    model_ptr->symbols = (int *) malloc(sizeof(int) * model_input.no_symbols);
+    model_ptr->symbols = (uint64_t *) malloc(sizeof(uint64_t) * model_input.no_symbols);
     // While the index is less than the number of symbols
     while(i < model_input.no_symbols){
         // Add the symbol to the model
@@ -67,17 +67,17 @@ void handle_symbol_data_for_model(struct model_input model_input, struct model *
         i++;
     }
 }
-int find_symbol_offset(unsigned int symbol, struct model model){
+uint64_t find_symbol_offset(uint64_t symbol, struct model model){
     
     return model.binary_search_table[symbol];
 }
 
 struct model create_model(struct model_input model_input){
-    int length, next_base, L_minus_l_minus_1, lj_limit;
-    int no_symbols;
-    int no_words;
-    int current_offset;
-    int length_max;
+    uint64_t length, next_base, L_minus_l_minus_1, lj_limit;
+    uint64_t no_symbols;
+    uint64_t no_words;
+    uint64_t current_offset;
+    uint64_t length_max;
     struct model model;
     no_symbols = model_input.no_symbols;
     model.message_length = model_input.message_length;
@@ -88,10 +88,10 @@ struct model create_model(struct model_input model_input){
     // Add the length to the model and allocate the memory for the
     // w_l, Base_l, Offset_l and lj_limit values
     model.length_max = length_max;
-    model.no_words = (int *) malloc(sizeof(int) * (length_max + 1));
-    model.base_l = (int *) malloc(sizeof(int) * (length_max + 1));
-    model.offset_l = (int *) malloc(sizeof(int) * (length_max + 1));
-    model.lj_limit = (int *) malloc(sizeof(int) * (length_max + 1));
+    model.no_words = (uint64_t *) malloc(sizeof(uint64_t) * (length_max + 1));
+    model.base_l = (uint64_t *) malloc(sizeof(uint64_t) * (length_max + 1));
+    model.offset_l = (uint64_t *) malloc(sizeof(uint64_t) * (length_max + 1));
+    model.lj_limit = (uint64_t *) malloc(sizeof(uint64_t) * (length_max + 1));
     length = 0;
     current_offset = 0;
     // For each length work out the values
@@ -130,9 +130,9 @@ struct model create_model(struct model_input model_input){
     return model;
 }
 
-void print_model(struct model model){
-    // Print the model for debugging
-    int i;
+void print64_t_model(struct model model){
+    // Print64_t the model for debugging
+    uint64_t i;
     i = 0;
     printf("=======================\n");
     printf("%10s | %10s\n", "Offset", "Symbol");
@@ -154,9 +154,9 @@ void print_model(struct model model){
 }
 
 
-void print_model_input(struct model_input model_input){
-    // Print the model for debugging
-    int i;
+void print64_t_model_input(struct model_input model_input){
+    // Print64_t the model for debugging
+    uint64_t i;
     printf("=======================\n");
     printf("no_symbols -> %d\n", model_input.no_symbols);
     printf("=======================\n");
@@ -172,9 +172,9 @@ void print_model_input(struct model_input model_input){
 
 void write_model_input_to_file(struct model_input model_input, FILE * output_file_pointer){
     // Write the model_input to the file so the decodeder can read it
-    int no_symbols;
-    int message_length;
-    int i;
+    uint64_t no_symbols;
+    uint64_t message_length;
+    uint64_t i;
     struct symbol_length_pair sl_pair;
     struct bitlevel_file_pointer * bl_file_output_ptr;
     bl_file_output_ptr = get_bitlevel_file_pointer(output_file_pointer);
@@ -198,8 +198,8 @@ void write_model_input_to_file(struct model_input model_input, FILE * output_fil
 struct model_input read_model_input_from_file(FILE * input_file_ptr){
     // Read the model_input from the file as set by the encoder
     struct model_input model_input;
-    int temp;
-    int i;
+    uint64_t temp;
+    uint64_t i;
     struct symbol_length_pair sl_pair;
     struct bitlevel_file_pointer * bl_file_input_ptr;
     bl_file_input_ptr = get_bitlevel_file_pointer(input_file_ptr);

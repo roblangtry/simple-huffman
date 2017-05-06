@@ -1,5 +1,5 @@
 #include "decompress.h"
-int run_decompression(char *input_filename, char *output_filename, int verbose_flag, int general){
+int run_decompression(char *input_filename, char *output_filename, uint64_t verbose_flag, uint64_t general){
     FILE *input_file_pointer;
     FILE *output_file_pointer;
     struct model_input model_input;
@@ -9,11 +9,11 @@ int run_decompression(char *input_filename, char *output_filename, int verbose_f
     // Read the model_input data from the file
     model_input = read_model_input_from_file(input_file_pointer);
     if (verbose_flag == 1)
-        print_model_input(model_input);
+        print64_t_model_input(model_input);
     // Use the model_input data to create the model same as the encoder
     model = create_model(model_input);
     if (verbose_flag == 1)
-        print_model(model);
+        print64_t_model(model);
     // Use the model to read the input file and create the decompressed output file
     write_decompressed_file(input_file_pointer, output_file_pointer, model, general);
     // Free the struct variables
@@ -25,9 +25,9 @@ int run_decompression(char *input_filename, char *output_filename, int verbose_f
     return 1;
 }
 
-void write_decompressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model, int general){
-    int length, no_symbols_processed, c, symbol_offset;
-    int value, max_length;
+void write_decompressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model, uint64_t general){
+    uint64_t length, no_symbols_processed, c, symbol_offset;
+    uint64_t value, max_length;
     struct bitlevel_file_pointer * bitlevel_file_pointer;
     // Create the bitlevel file pointer
     bitlevel_file_pointer = get_bitlevel_file_pointer(input_file_pointer);
@@ -56,12 +56,12 @@ void write_decompressed_file(FILE * input_file_pointer, FILE * output_file_point
         } else if(general == 1){
             fwrite(&model.symbols[symbol_offset-1],sizeof(char),1,output_file_pointer);
         } else{
-            fwrite(&model.symbols[symbol_offset-1],sizeof(unsigned int),1,output_file_pointer);
+            fwrite(&model.symbols[symbol_offset-1],sizeof(uint32_t),1,output_file_pointer);
         }
-        // Read into a buffer however many bits were digested in this iteration
+        // Read uint64_to a buffer however many bits were digested in this iteration
         // of the decompression
         buffer = bitlevel_read(bitlevel_file_pointer, length + 1);
-        // update the value with the new intake bits from the buffer
+        // update the value with the new uint64_take bits from the buffer
         value = (value << (length + 1)) + buffer.value;
         // Increment the amount of symbols processed
         no_symbols_processed++;
