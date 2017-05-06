@@ -7,9 +7,24 @@ struct bitlevel_file_pointer * get_bitlevel_file_pointer(FILE * file_pointer){
     // Set initial values and file pointer
     bitlevel_file_pointer->file_pointer = file_pointer;
     bitlevel_file_pointer->buffer = 0;
+    bitlevel_file_pointer->bytes_in_buffer = 0;
     bitlevel_file_pointer->current_length = 0;
     // Return the pointer
     return bitlevel_file_pointer;
+}
+void buffer_write(struct bitlevel_file_pointer * bitlevel_file_pointer, unsigned char byte){
+    bitlevel_file_pointer->byte_buffer[bitlevel_file_pointer->bytes_in_buffer] = byte;
+    bitlevel_file_pointer->bytes_in_buffer += 1;
+    if(bitlevel_file_pointer->bytes_in_buffer == BUFFER_SIZE){
+        fwrite(bitlevel_file_pointer->byte_buffer, sizeof(unsigned char), BUFFER_SIZE, bitlevel_file_pointer->file_pointer);
+        bitlevel_file_pointer->bytes_in_buffer = 0;
+    }
+}
+size_t buffer_flush(struct bitlevel_file_pointer * bitlevel_file_pointer){
+    size_t n;
+    n = fwrite(bitlevel_file_pointer->byte_buffer, sizeof(unsigned char), bitlevel_file_pointer->bytes_in_buffer, bitlevel_file_pointer->file_pointer);
+    bitlevel_file_pointer->bytes_in_buffer = 0;
+    return n;
 }
 size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, struct bitlevel_object write_object){
     // Write out bitlevel info
@@ -34,7 +49,7 @@ size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, stru
         write_object.value = write_object.value - (rbyte << (write_object.length - bits_from_rbyte));
         write_object.length = write_object.length - bits_from_rbyte;
         // Write out the calculated byte
-        fwrite(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
+        buffer_write(bitlevel_file_pointer, byte);
         no_bytes_written = 1;
         // While there is still enough information in the write object to write a byte
         while(write_object.length >= 8){
@@ -42,7 +57,7 @@ size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, stru
             // Pull 8 more bits from the write object uint64_to a byte
             byte = write_object.value >> (write_object.length - 8);
             // Write out that byte
-            fwrite(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
+            buffer_write(bitlevel_file_pointer, byte);
             // Recalculate the write object
             write_object.value = write_object.value - (byte << (write_object.length - 8));
             write_object.length = write_object.length - 8;
@@ -90,7 +105,7 @@ size_t bitlevel_flush(struct bitlevel_file_pointer * bitlevel_file_pointer){
             // Pull the byte info from the buffer
             byte = bitlevel_file_pointer->buffer >> (bitlevel_file_pointer->current_length - 8);
             // Write out the byte
-            fwrite(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
+            buffer_write(bitlevel_file_pointer, byte);
             // Amend the buffer values to reflect there new values
             bitlevel_file_pointer->current_length = bitlevel_file_pointer->current_length - 8;
             bitlevel_file_pointer->buffer = bitlevel_file_pointer->buffer - (byte << (bitlevel_file_pointer->current_length - 8));
@@ -100,13 +115,14 @@ size_t bitlevel_flush(struct bitlevel_file_pointer * bitlevel_file_pointer){
             // Move the values over to ensure they will be read at the other side
             byte = (unsigned char)(bitlevel_file_pointer->buffer << (8 - bitlevel_file_pointer->current_length));
             // Write the byte
-            fwrite(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
+            buffer_write(bitlevel_file_pointer, byte);
             no_bytes_written = no_bytes_written + 1;
             // Zero out the buffer
             bitlevel_file_pointer->current_length = 0;
             bitlevel_file_pointer->buffer = 0;
         }
         // Flush to ensure the file system will write the info not just hold it in memory
+        buffer_flush(bitlevel_file_pointer);
         fflush(bitlevel_file_pointer->file_pointer);
         return no_bytes_written;
 }

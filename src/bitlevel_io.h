@@ -5,6 +5,7 @@
 #include "symbols.h"
 #ifndef BITLEVEL_IO_CODE
 #define BITLEVEL_IO_CODE
+#define BUFFER_SIZE 1048576
 struct bitlevel_object {
     uint64_t value;
     uint64_t length;
@@ -13,6 +14,8 @@ struct bitlevel_file_pointer {
     FILE * file_pointer;
     uint64_t buffer;
     uint64_t current_length;
+    unsigned char byte_buffer[BUFFER_SIZE];
+    uint64_t bytes_in_buffer;
 };
 struct bitlevel_file_pointer * get_bitlevel_file_pointer(FILE * file_pointer);
 size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, struct bitlevel_object write_object);

@@ -5,7 +5,7 @@
 #ifndef SYMBOLS_CODE
 #define SYMBOLS_CODE
 #define MAX_SYMBOL 524288
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 1048576
 
 struct symbol_length_pair {
     uint64_t symbol;
