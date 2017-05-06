@@ -8,6 +8,7 @@
 #include "elias.h"
 #ifndef MODEL_CODE
 #define MODEL_CODE
+#define MAX_SYMBOL 524288
 struct model_input {
     int message_length;
     int no_symbols;
@@ -22,7 +23,7 @@ struct model {
     int message_length;
     int no_symbols;
     int * symbols;
-    struct symbol_offset * binary_search_table;
+    size_t * binary_search_table;
     int length_max;
     int * no_words;
     int * base_l;
@@ -31,7 +32,7 @@ struct model {
 };
 int compare_symbol_offset (const void * a, const void * b);
 void handle_symbol_data_for_model(struct model_input model_input, struct model * model_ptr);
-int find_symbol_offset(int symbol, struct model model);
+int find_symbol_offset(unsigned int symbol, struct model model);
 struct model_input recursive_codeword_length(struct huffman_tree_node node, int level);
 struct model_input create_model_input(struct huffman_tree_node root);
 struct model create_model(struct model_input model_input);

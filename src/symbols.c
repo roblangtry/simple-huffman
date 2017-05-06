@@ -11,14 +11,15 @@ int compare_symbol_length (const void * a, const void * b)
 struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer, int general){
     // Read the input file and add the symbol probabilities to the probability list
     int temp_value;
-    unsigned char c_value[2000];
-    unsigned int i_value[2000];
+    unsigned char c_value[BUFFER_SIZE];
+    unsigned int i_value[BUFFER_SIZE];
     struct probability_list list;
     struct probability_point point;
-    int * val_list;
-    int list_size, i, alloted;
+    uint * val_list;
+    uint list_size, i, alloted;
+    uint nval;
     // Initialise_the probability list
-    val_list = malloc(sizeof(int));
+    val_list = calloc(MAX_SYMBOL, sizeof(int));
     list = initialise_probabilities_list(input_file_pointer, general);
     // While there are symbols to read; read them.
     list_size = 0;
@@ -26,36 +27,46 @@ struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer,
         while (fscanf(input_file_pointer, "%d\n", &temp_value) != EOF) {
             // Add the read value to the proabability list
             //add_to_probability_list(&list, temp_value);
-            val_list = add_to_val_list(val_list, &list_size, temp_value);
+            nval = add_to_val_list(val_list, temp_value);
+            if(nval > list_size){
+                list_size = nval;
+            }
         }
     } else if(general == 1){
-        alloted = fread(c_value, sizeof(char), 2000, input_file_pointer);
+        alloted = fread(c_value, sizeof(char), BUFFER_SIZE, input_file_pointer);
         while (alloted > 0) {
             i = 0;
             while(i < alloted){
                 // Add the read value to the proabability list
                 temp_value = c_value[i];
                 //add_to_probability_list(&list, temp_value);
-                val_list = add_to_val_list(val_list, &list_size, temp_value);
+                nval = add_to_val_list(val_list, temp_value);
+                if(nval > list_size){
+                    list_size = nval;
+                }
                 i++;
             }
-            alloted = fread(c_value, sizeof(char), 2000, input_file_pointer);
+            alloted = fread(c_value, sizeof(char), BUFFER_SIZE, input_file_pointer);
         }
     } else{
-        alloted = fread(i_value, sizeof(unsigned int), 2000, input_file_pointer);
+        alloted = fread(i_value, sizeof(unsigned int), BUFFER_SIZE, input_file_pointer);
         while (alloted > 0) {
             i = 0;
             while(i < alloted){
                 // Add the read value to the proabability list
                 temp_value = i_value[i];
                 //add_to_probability_list(&list, temp_value);
-                val_list = add_to_val_list(val_list, &list_size, temp_value);
+                nval = add_to_val_list(val_list, temp_value);
+                if(nval > list_size){
+                    list_size = nval;
+                }
                 i++;
             }
-            alloted = fread(i_value, sizeof(unsigned int), 2000, input_file_pointer);
+            alloted = fread(i_value, sizeof(unsigned int), BUFFER_SIZE, input_file_pointer);
         }
     }
     i = 0;
+
     while(i < list_size){
         if(val_list[i] > 0){
             point.value = i;
@@ -66,21 +77,11 @@ struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer,
     }
     return list;
 }
-int * add_to_val_list(int * list, int * size, int value){
-    int i;
-    if(value >= *size){
-        i = *size;
-        *size = 10 * value + 1;
-        list = realloc(list, sizeof(int) * (*size));
-        while(i<*size){
-            list[i] = 0;
-            i++;
-        }
-        list[value]++;
-    } else{
-        list[value]++;
-    }
-    return list;
+
+int add_to_val_list(int * list, int value){
+    CHECK_SYMBOL_RANGE(value)
+    list[value]++;
+    return value;
 }
 struct probability_list initialise_probabilities_list(FILE * input_file_pointer, int general){
     int value;

@@ -11,7 +11,7 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
     // Work out the probabilities of the symbol within the file
     list = evaluate_symbol_probabilities(input_file_pointer, general);
     // Sort the list so that most frequent is at 0
-    sort_symbol_probabilities(&list);
+    sort_symbol_probabilities(&list);;
     if (verbose_flag == 1)
         print_symbol_frequencies(list);
     // Create a huffman binary tree from the list
@@ -45,9 +45,9 @@ int run_compression(char *input_filename, char *output_filename, int verbose_fla
 }
 
 void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer, struct model model, int general){
-    int value, i, alloted;
-    unsigned char c_value[2000];
-    unsigned int i_value[2000];
+    unsigned int value, i, alloted;
+    unsigned char c_value[BUFFER_SIZE];
+    unsigned int i_value[BUFFER_SIZE];
     struct bitlevel_object write_object;
     struct bitlevel_file_pointer * bitlevel_file_pointer;
     // Create the bitlevel file pointer from the output file pointer
@@ -61,7 +61,7 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
             bitlevel_write(bitlevel_file_pointer, write_object);
         }
     } else if(general == 1){
-        alloted = fread(c_value, sizeof(char), 2000, input_file_pointer);
+        alloted = fread(c_value, sizeof(char), BUFFER_SIZE, input_file_pointer);
         while (alloted > 0) {
             i = 0;
             while(i < alloted){
@@ -72,10 +72,10 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
                 bitlevel_write(bitlevel_file_pointer, write_object);
                 i++;
             }
-            alloted = fread(c_value, sizeof(char), 2000, input_file_pointer);
+            alloted = fread(c_value, sizeof(char), BUFFER_SIZE, input_file_pointer);
         }
     } else{
-        alloted = fread(i_value, sizeof(unsigned int), 2000, input_file_pointer);
+        alloted = fread(i_value, sizeof(unsigned int), BUFFER_SIZE, input_file_pointer);
         while (alloted > 0) {
             i = 0;
             while(i < alloted){
@@ -86,7 +86,7 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
                 bitlevel_write(bitlevel_file_pointer, write_object);
                 i++;
             }
-            alloted = fread(i_value, sizeof(unsigned int), 2000, input_file_pointer);
+            alloted = fread(i_value, sizeof(unsigned int), BUFFER_SIZE, input_file_pointer);
         }
     }
     // Flush the file pointer to ensure all info written
@@ -94,7 +94,7 @@ void write_compressed_file(FILE * input_file_pointer, FILE * output_file_pointer
     // Free the bitlevel_file_pointer
     free(bitlevel_file_pointer);
 }
-struct bitlevel_object calculate_write_object(int value, struct model model){
+struct bitlevel_object calculate_write_object(unsigned int value, struct model model){
     int offset;
     int l;
     int c;

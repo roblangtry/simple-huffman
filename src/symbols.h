@@ -3,6 +3,13 @@
 #include <math.h>
 #ifndef SYMBOLS_CODE
 #define SYMBOLS_CODE
+#define MAX_SYMBOL 524288
+#define BUFFER_SIZE 4096
+#define CHECK_SYMBOL_RANGE(s)                                                  \
+    if (((s) < 1) || ((s) > MAX_SYMBOL)) {                                     \
+        fprintf(stderr, "Symbol %u is out of range.\n", s);                    \
+        exit(-1);                                                              \
+    }
 struct symbol_length_pair {
     int symbol;
     int length;
@@ -23,5 +30,5 @@ int compare_probability (const void * a, const void * b);
 void sort_symbol_probabilities(struct probability_list * list);
 void print_symbol_frequencies(struct probability_list list);
 void free_probability_list(struct probability_list list);
-int * add_to_val_list(int * list, int * size, int value);
+int add_to_val_list(int * list, int value);
 #endif

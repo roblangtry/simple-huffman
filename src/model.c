@@ -53,7 +53,7 @@ void handle_symbol_data_for_model(struct model_input model_input, struct model *
     int i = 0;
     struct symbol_offset so_pair;
     // Allocate enough memory for the binary search table and symbols
-    model_ptr->binary_search_table = (struct symbol_offset *) malloc(sizeof(struct symbol_offset) * model_input.no_symbols);
+    model_ptr->binary_search_table = malloc(sizeof(size_t) * MAX_SYMBOL);
     model_ptr->symbols = (int *) malloc(sizeof(int) * model_input.no_symbols);
     // While the index is less than the number of symbols
     while(i < model_input.no_symbols){
@@ -63,37 +63,13 @@ void handle_symbol_data_for_model(struct model_input model_input, struct model *
         so_pair.symbol = model_input.list[i].symbol;
         so_pair.offset = i;
         // Add that symbol offset to the binary search table
-        model_ptr->binary_search_table[i] = so_pair;
+        model_ptr->binary_search_table[model_ptr->symbols[i]] = i;
         i++;
     }
-    // Sort the binary search table
-    qsort(model_ptr->binary_search_table, model_input.no_symbols, sizeof(struct symbol_offset), compare_symbol_offset);
 }
-int find_symbol_offset(int symbol, struct model model){
-    // Find the offset for a symbol by binary searching the binary search table in the model
-    int index_to_check;
-    int upper_bound;
-    int lower_bound;
-    // Set the bounds [0, n] where n is the last offset in the list
-    upper_bound = model.no_symbols - 1;
-    lower_bound = 0;
-    // Set the index to check
-    index_to_check = upper_bound / 2;
-    // While the symbol being pointed to in the search table doesnt equal the query symbol
-    while(symbol != model.binary_search_table[index_to_check].symbol){
-        if(symbol > model.binary_search_table[index_to_check].symbol){
-            // The symbol is higher in the table than this so set this index
-            // as the new lower bound
-            lower_bound = index_to_check;
-            index_to_check = ((upper_bound - lower_bound) / 2 + ((upper_bound - lower_bound)%2)) + lower_bound;
-        } else{
-            // The symbol is lower in the table than this so set this index
-            // as the new upper bound
-            upper_bound = index_to_check;
-            index_to_check = ((upper_bound - lower_bound) / 2 ) + lower_bound;
-        }
-    }
-    return model.binary_search_table[index_to_check].offset;
+int find_symbol_offset(unsigned int symbol, struct model model){
+    
+    return model.binary_search_table[symbol];
 }
 
 struct model create_model(struct model_input model_input){
