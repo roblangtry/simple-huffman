@@ -5,7 +5,7 @@ int main ( uint64_t argc, char *argv[] ){
     uint64_t verbose = 0;
     uint64_t general = 0;
     if (state == -1){
-        print64_t_bad_input_message(argv[0]);
+        print_bad_input_message(argv[0]);
         return -1;
     }
     if (state >= 8){
@@ -50,7 +50,7 @@ uint64_t parse_commandline_args(uint64_t argc, char *argv[]){
     }
     return state;
 }
-void print64_t_bad_input_message(char *message){
+void print_bad_input_message(char *message){
     // Write out the error message if bad input
     printf("Error: '%s' input incorrectly formatted!\n", message);
     printf("For compression format as such:\n");

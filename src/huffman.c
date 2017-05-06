@@ -132,25 +132,25 @@ struct huffman_root_holder create_huffman_tree(struct probability_list list){
     // Free pointers list
     free(packaged_node_pointers);
     holder.root = root;
-    //print64_t_huffman_tree(root, 0);
+    //print_huffman_tree(root, 0);
     holder.package_root = ordered_packaged_node_pointers;
     holder.no_package = allocated_packaged_ordered_list;
     holder.leaf_root = leaf_nodes;
     return holder;
 }
 
-void print64_t_huffman_tree(struct huffman_tree_node * node, uint64_t level){
-    // Print64_t the huffman tree for debugging
+void print_huffman_tree(struct huffman_tree_node * node, uint64_t level){
+    // print the huffman tree for debugging
     if(level == 0){
         printf("=======================\n");
         printf("Huffman Tree\n");
         printf("=======================\n");
     }
     if(node->right != NULL){
-        print64_t_huffman_tree(node->right, level + 1);
+        print_huffman_tree(node->right, level + 1);
     }
     if(node->left != NULL){
-        print64_t_huffman_tree(node->left, level + 1);
+        print_huffman_tree(node->left, level + 1);
     }
     if(level == 0){
         printf("=======================\n");

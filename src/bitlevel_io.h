@@ -14,10 +14,13 @@ struct bitlevel_file_pointer {
     FILE * file_pointer;
     uint64_t buffer;
     uint64_t current_length;
-    unsigned char byte_buffer[BUFFER_SIZE];
+    unsigned char * byte_buffer;
     uint64_t bytes_in_buffer;
+    uint64_t current_byte;
+    unsigned char use_buffer;
 };
 struct bitlevel_file_pointer * get_bitlevel_file_pointer(FILE * file_pointer);
+struct bitlevel_file_pointer * get_unbuffered_bitlevel_file_pointer(FILE * file_pointer);
 size_t bitlevel_write(struct bitlevel_file_pointer * bitlevel_file_pointer, struct bitlevel_object write_object);
 struct bitlevel_object bitlevel_read(struct bitlevel_file_pointer * bitlevel_file_pointer, uint64_t length);
 size_t bitlevel_flush(struct bitlevel_file_pointer * bitlevel_file_pointer);

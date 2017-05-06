@@ -126,8 +126,8 @@ void sort_symbol_probabilities(struct probability_list * list){
 
 
 
-void print64_t_symbol_frequencies(struct probability_list list){
-    // Print64_t the symbol frequencies of the probability list
+void print_symbol_frequencies(struct probability_list list){
+    // print the symbol frequencies of the probability list
     uint64_t symbol, freq, index;
     index = 0;
     printf("=======================\n");
@@ -135,7 +135,7 @@ void print64_t_symbol_frequencies(struct probability_list list){
     printf("=======================\n");
     // While the index value being read is less than the list length
     while(list.list_length > index){
-        // print64_t the symbol and frequency
+        // print the symbol and frequency
         symbol = list.list[index].value;
         freq = list.list[index].occurrences;
         printf("%10d | %10d\n", symbol, freq);

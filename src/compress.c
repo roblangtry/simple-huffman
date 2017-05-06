@@ -13,20 +13,20 @@ int run_compression(char *input_filename, char *output_filename, uint64_t verbos
     // Sort the list so that most frequent is at 0
     sort_symbol_probabilities(&list);;
     if (verbose_flag == 1)
-        print64_t_symbol_frequencies(list);
+        print_symbol_frequencies(list);
     // Create a huffman binary tree from the list
     huffman_root = create_huffman_tree(list);
     if (verbose_flag == 1)
-        print64_t_huffman_tree(huffman_root.root, 0);
+        print_huffman_tree(huffman_root.root, 0);
     // Create the model_input struct to be transmitted between encoder and decoder
     // is used to create the model
     model_input = create_model_input(*huffman_root.root);
     if (verbose_flag == 1)
-        print64_t_model_input(model_input);
+        print_model_input(model_input);
     // Create the model from the model_input
     model = create_model(model_input);
     if (verbose_flag == 1)
-        print64_t_model(model);
+        print_model(model);
     // Write out the model_input to file so the decoder can construct a model
     write_model_input_to_file(model_input, output_file_pointer);
     // Rewind the input file pointer so that we can read it again to write the compressed file

@@ -130,8 +130,8 @@ struct model create_model(struct model_input model_input){
     return model;
 }
 
-void print64_t_model(struct model model){
-    // Print64_t the model for debugging
+void print_model(struct model model){
+    // print the model for debugging
     uint64_t i;
     i = 0;
     printf("=======================\n");
@@ -154,8 +154,8 @@ void print64_t_model(struct model model){
 }
 
 
-void print64_t_model_input(struct model_input model_input){
-    // Print64_t the model for debugging
+void print_model_input(struct model_input model_input){
+    // print the model for debugging
     uint64_t i;
     printf("=======================\n");
     printf("no_symbols -> %d\n", model_input.no_symbols);
@@ -202,7 +202,7 @@ struct model_input read_model_input_from_file(FILE * input_file_ptr){
     uint64_t i;
     struct symbol_length_pair sl_pair;
     struct bitlevel_file_pointer * bl_file_input_ptr;
-    bl_file_input_ptr = get_bitlevel_file_pointer(input_file_ptr);
+    bl_file_input_ptr = get_unbuffered_bitlevel_file_pointer(input_file_ptr);
     temp = read_elias_value(bl_file_input_ptr);
     // Get the message length and no. symbols first so that the decoder knows how large the 
     // model input is and can accurately read it

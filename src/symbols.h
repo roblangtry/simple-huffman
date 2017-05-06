@@ -25,7 +25,7 @@ struct probability_list initialise_probabilities_list(FILE * input_file, uint64_
 void add_to_probability_list(struct probability_list * list, struct probability_point64_t point64_t);
 uint64_t compare_probability (const void * a, const void * b);
 void sort_symbol_probabilities(struct probability_list * list);
-void print64_t_symbol_frequencies(struct probability_list list);
+void print_symbol_frequencies(struct probability_list list);
 void free_probability_list(struct probability_list list);
 uint64_t add_to_val_list(uint64_t * list, uint32_t value);
 #endif

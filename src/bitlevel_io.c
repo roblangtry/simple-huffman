@@ -7,11 +7,30 @@ struct bitlevel_file_pointer * get_bitlevel_file_pointer(FILE * file_pointer){
     // Set initial values and file pointer
     bitlevel_file_pointer->file_pointer = file_pointer;
     bitlevel_file_pointer->buffer = 0;
+    bitlevel_file_pointer->byte_buffer = malloc(sizeof(unsigned char) * BUFFER_SIZE);
+    bitlevel_file_pointer->current_byte = 0;
     bitlevel_file_pointer->bytes_in_buffer = 0;
     bitlevel_file_pointer->current_length = 0;
+    bitlevel_file_pointer->use_buffer = 1;
     // Return the pointer
     return bitlevel_file_pointer;
 }
+struct bitlevel_file_pointer * get_unbuffered_bitlevel_file_pointer(FILE * file_pointer){
+    // Make a bitlevel_file_pointer from a file pointer
+    struct bitlevel_file_pointer * bitlevel_file_pointer;
+    // Assign the memory
+    bitlevel_file_pointer = (struct bitlevel_file_pointer *)malloc(sizeof(struct bitlevel_file_pointer));
+    // Set initial values and file pointer
+    bitlevel_file_pointer->file_pointer = file_pointer;
+    bitlevel_file_pointer->buffer = 0;
+    bitlevel_file_pointer->current_byte = 0;
+    bitlevel_file_pointer->bytes_in_buffer = 0;
+    bitlevel_file_pointer->current_length = 0;
+    bitlevel_file_pointer->use_buffer = 0;
+    // Return the pointer
+    return bitlevel_file_pointer;
+}
+
 void buffer_write(struct bitlevel_file_pointer * bitlevel_file_pointer, unsigned char byte){
     bitlevel_file_pointer->byte_buffer[bitlevel_file_pointer->bytes_in_buffer] = byte;
     bitlevel_file_pointer->bytes_in_buffer += 1;
@@ -19,6 +38,20 @@ void buffer_write(struct bitlevel_file_pointer * bitlevel_file_pointer, unsigned
         fwrite(bitlevel_file_pointer->byte_buffer, sizeof(unsigned char), BUFFER_SIZE, bitlevel_file_pointer->file_pointer);
         bitlevel_file_pointer->bytes_in_buffer = 0;
     }
+}
+unsigned char buffer_read(struct bitlevel_file_pointer * bitlevel_file_pointer){
+    unsigned char byte;
+    if(bitlevel_file_pointer->use_buffer == 1){
+        if(bitlevel_file_pointer->current_byte >= bitlevel_file_pointer->bytes_in_buffer){
+            bitlevel_file_pointer->current_byte = 0;
+            bitlevel_file_pointer->bytes_in_buffer = fread(bitlevel_file_pointer->byte_buffer, sizeof(unsigned char), BUFFER_SIZE, bitlevel_file_pointer->file_pointer);
+        }
+        byte = bitlevel_file_pointer->byte_buffer[bitlevel_file_pointer->current_byte];
+        bitlevel_file_pointer->current_byte += 1;
+    } else{
+        fread(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
+    }
+    return byte;
 }
 size_t buffer_flush(struct bitlevel_file_pointer * bitlevel_file_pointer){
     size_t n;
@@ -82,7 +115,7 @@ struct bitlevel_object bitlevel_read(struct bitlevel_file_pointer * bitlevel_fil
     // While their is less info in the buffer than requested pull in more info
     while(length > bitlevel_file_pointer->current_length){
         // Read in a byte
-        fread(&byte, sizeof(unsigned char), 1, bitlevel_file_pointer->file_pointer);
+        byte = buffer_read(bitlevel_file_pointer);
         // Append the byte to the buffer and add 8 to the current length
         bitlevel_file_pointer->buffer = (bitlevel_file_pointer->buffer << 8) + (uint64_t)byte;
         bitlevel_file_pointer->current_length = bitlevel_file_pointer->current_length + 8;
