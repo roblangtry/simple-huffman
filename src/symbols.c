@@ -67,7 +67,7 @@ struct probability_list evaluate_symbol_probabilities(FILE * input_file_pointer,
     }
     i = 0;
 
-    while(i < list_size){
+    while(i <= list_size){
         if(val_list[i] > 0){
             point64_t.value = i;
             point64_t.occurrences = val_list[i];
