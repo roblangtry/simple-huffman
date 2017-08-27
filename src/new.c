@@ -39,10 +39,8 @@ int run_new_compression(){
     t_C_model * model = malloc(sizeof(t_C_model));
     t_C_block * block = malloc(sizeof(t_C_block));
     t_bwriter * writer = malloc(sizeof(t_bwriter));
-    size_t size;
-    size_t no_blocks;
     start_bwriter(writer);
-    while((block->len = fread_unlocked(block->content, sizeof(uint32_t), BLOCK_SIZE, stdin)) > 0){
+    while((block->len = fread(block->content, sizeof(uint32_t), BLOCK_SIZE, stdin)) > 0){
         get_compression_statistics(block, stats, writer);
         build_compression_model(block, stats, model, writer);
         run_compression_model(block, model, writer);
@@ -54,25 +52,52 @@ int run_new_decompression(){
     t_D_stats * stats = malloc(sizeof(t_D_stats));
     t_D_model * model = malloc(sizeof(t_D_model));
     t_breader * reader = malloc(sizeof(t_breader));
-    uint no_blocks;
-    uint i = 0;
+    t_iwriter * writer = malloc(sizeof(t_iwriter));
     start_breader(reader);
+    start_iwriter(writer);
     while(atend(reader)){
         if(get_decompression_statistics(stats, reader) == 0) break;
         if(build_decompression_model(stats, model, reader) == 0) break;
-        if(run_decompression_model(model, reader) == 0) break;
-        i++;
+        if(run_decompression_model(model, reader, writer) == 0) break;
     }
+    flush_ints(writer);
     return 0;
 }
 int
 get_compression_statistics(t_C_block * block, t_C_stats * stats, t_bwriter * writer)
 {
+    uint32_t * hashmap = calloc(SYMBOL_MAP_SIZE, sizeof(uint32_t));
+    uint32_t max = 0;
+    uint32_t i;
+    uint32_t j = 0;
+    t_vector vector;
+    stats->no_distinct = 0;
+    stats->total = 0;
+    for(i = 0; i < block->len; i++)
+    {
+        stats->total++;
+        if(hashmap[block->content[i]] == 0) stats->no_distinct++;
+        if(block->content[i] > max) max = block->content[i];
+        hashmap[block->content[i]]++;
+    }
+    stats->freqs = malloc(sizeof(t_vector) * stats->no_distinct);
+    for(i=0; i <= max; i++)
+    {
+        if(hashmap[i] > 0)
+        {
+            vector.value = i;
+            vector.freq = hashmap[i];
+            stats->freqs[j++] = vector;
+        }
+    }
+    free(hashmap);
     return 1;
 }
 int
 build_compression_model(t_C_block * block, t_C_stats * stats, t_C_model * model, t_bwriter * writer)
 {
+
+    free(stats->freqs);
     return 1;
 }
 int
@@ -97,14 +122,14 @@ build_decompression_model(t_D_stats * stats, t_D_model * model, t_breader * read
     return 1;
 }
 int
-run_decompression_model(t_D_model * model, t_breader * reader)
+run_decompression_model(t_D_model * model, t_breader * reader, t_iwriter * writer)
 {
-    uint i, V, len;
+    uint32_t i, V, len;
     if(elias_delta_decode(&len, reader) == 0) return 0;
     for(i=0;i<len;i++)
     {
         if(elias_delta_decode(&V, reader) == 0) break;
-        fwrite(&V, sizeof(uint32_t), 1, stdout);
+        write_int(V, writer);
     }
     return 1;
 }
@@ -115,13 +140,13 @@ void start_breader(t_breader * reader){
     reader->buffer_head = 0;
     reader->end = 0;
 }
-uint get_bit(t_breader * reader, uint * value){
+uint32_t get_bit(t_breader * reader, uint32_t * value){
     if(reader->head == 0){
         /* pull from buffer */
         if(reader->buffer_head == reader->length)
         {
             if(reader->end) return 0;
-            reader->length = fread_unlocked(reader->buffer, sizeof(uint32_t), BUFFER_SZ, stdin);
+            reader->length = fread(reader->buffer, sizeof(uint32_t), BUFFER_SZ, stdin);
             if(reader->length != BUFFER_SZ) reader->end = 1;
             reader->buffer_head = 0;
         }
@@ -147,7 +172,7 @@ void start_bwriter(t_bwriter * writer){
     writer->head = 32;
     writer->buffer_head = 0;
 }
-void write_bit(uint b, t_bwriter * writer){
+void write_bit(uint32_t b, t_bwriter * writer){
     if(b)
         writer->current += BIT_VALUES[writer->head];
     writer->head--;
@@ -173,21 +198,21 @@ void flush_bits(t_bwriter * writer)
     writer->head = 32;
 }
 void
-binary_encode(uint value, uint length, t_bwriter * writer)
+binary_encode(uint32_t value, uint32_t length, t_bwriter * writer)
 {
-    uint b;
+    uint32_t b, v = value;
     while(length > 0)
     {
-        b = value % 2;
+        b = v % 2;
         write_bit(b, writer);
-        value = value >> 1;
+        v = v >> 1;
         length--;
     }
 }
-uint
-binary_decode(uint * V,uint length, t_breader * reader)
+uint32_t
+binary_decode(uint32_t * V,uint32_t length, t_breader * reader)
 {
-    uint i = 0, b;
+    uint32_t i = 0, b;
     *V = 0;
     while(i<length)
     {
@@ -198,20 +223,21 @@ binary_decode(uint * V,uint length, t_breader * reader)
     return 1;
 }
 void
-unary_encode(uint value, t_bwriter * writer)
+unary_encode(uint32_t value, t_bwriter * writer)
 {
-    while(value > 1)
+    uint32_t v = value;
+    while(v > 1)
     {
         write_bit(1, writer);
-        value--;
+        v--;
     }
     write_bit(0, writer);
 }
-uint
-unary_decode(uint * V, t_breader * reader)
+uint32_t
+unary_decode(uint32_t * V, t_breader * reader)
 {
+    uint32_t b;
     *V = 1;
-    uint b;
     if (get_bit(reader, &b) == 0) return 0;
     while(b == 1)
     {
@@ -221,16 +247,16 @@ unary_decode(uint * V, t_breader * reader)
     return 1;
 }
 void
-elias_gamma_encode(uint value, t_bwriter * writer)
+elias_gamma_encode(uint32_t value, t_bwriter * writer)
 {
-    uint l = log2(value);
+    uint32_t l = (uint32_t)log2(value);
     unary_encode(l + 1, writer);
     binary_encode(value, l, writer);
 }
-uint
-elias_gamma_decode(uint * V,t_breader * reader)
+uint32_t
+elias_gamma_decode(uint32_t * V,t_breader * reader)
 {
-    uint l;
+    uint32_t l;
     if(unary_decode(&l, reader) == 0) return 0;
     l--;
     if(l == 0){
@@ -242,16 +268,16 @@ elias_gamma_decode(uint * V,t_breader * reader)
     return 1;
 }
 void
-elias_delta_encode(uint value, t_bwriter * writer)
+elias_delta_encode(uint32_t value, t_bwriter * writer)
 {
-    uint l = log2(value);
+    uint32_t l = (uint32_t)log2(value);
     elias_gamma_encode(l + 1, writer);
     binary_encode(value, l, writer);
 }
-uint
-elias_delta_decode(uint * V,t_breader * reader)
+uint32_t
+elias_delta_decode(uint32_t * V,t_breader * reader)
 {
-    uint l;
+    uint32_t l;
     if(elias_gamma_decode(&l, reader) == 0) return 0;
     l--;
     if(l == 0){
@@ -279,4 +305,29 @@ atend(t_breader * reader)
 {
     if(reader->end == 1 && reader->buffer_head == reader->length) return 0;
     return 1;
+}
+void
+start_iwriter(t_iwriter * writer)
+{
+    writer->head = 0;
+}
+void
+write_int(uint32_t i, t_iwriter * writer)
+{
+    writer->buffer[writer->head++] = i;
+    if(writer->head == BUFFER_SZ) {
+        fwrite(writer->buffer, sizeof(uint32_t), writer->head, stdout);
+        writer->head = 0;
+    }
+}
+void
+flush_ints(t_iwriter * writer)
+{
+    if(writer->head) {
+        fwrite(writer->buffer, sizeof(uint32_t), writer->head, stdout);
+        writer->head = 0;
+    }
+}
+uint32_t log2(uint32_t value){
+    return log(value)/log(2);
 }

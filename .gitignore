@@ -1,6 +1,7 @@
 simple-huffman
 *.o
 *.temp
+*.data
 *.log
 *.out
 *.pyc
