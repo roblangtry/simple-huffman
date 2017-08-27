@@ -11,7 +11,7 @@ int run_compression(char *input_filename, char *output_filename, uint64_t verbos
     // Work out the probabilities of the symbol within the file
     list = evaluate_symbol_probabilities(input_file_pointer, general);
     // Sort the list so that most frequent is at 0
-    sort_symbol_probabilities(&list);;
+    sort_symbol_probabilities(&list);
     if (verbose_flag == 1)
         print_symbol_frequencies(list);
     // Create a huffman binary tree from the list
