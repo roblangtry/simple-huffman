@@ -4,6 +4,8 @@ int main ( uint64_t argc, char *argv[] ){
     uint64_t state = parse_commandline_args(argc, argv);
     uint64_t verbose = 0;
     uint64_t general = 0;
+    if (state == NEW_ENCODE) return run_new_compression();
+    if (state == NEW_DECODE) return run_new_decompression();
     if (state == -1){
         print_bad_input_message(argv[0]);
         return -1;
@@ -20,6 +22,7 @@ int main ( uint64_t argc, char *argv[] ){
         verbose = 1;
         state = state - 2;
     }
+
     if (state == 0){
         return run_compression(argv[2 + verbose], argv[3 + verbose], verbose, general);
     } else{
@@ -29,6 +32,12 @@ int main ( uint64_t argc, char *argv[] ){
 uint64_t parse_commandline_args(uint64_t argc, char *argv[]){
     // Parse the command line arguments to the program
     uint64_t state = -1;
+    if(argc == 2){
+        if (strcmp("-nE", argv[1]) == 0 || strcmp("--new=encode", argv[1]) == 0)
+            state = NEW_ENCODE;
+        if (strcmp("-nD", argv[1]) == 0 || strcmp("--new=decode", argv[1]) == 0)
+            state = NEW_DECODE;
+    }
     if (argc >= 4){
         if (strcmp("-c", argv[1]) == 0 || strcmp("--compress", argv[1]) == 0){
             state = 0;
