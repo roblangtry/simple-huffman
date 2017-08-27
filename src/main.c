@@ -1,9 +1,9 @@
 #include "main.h"
-int main ( uint64_t argc, char *argv[] ){
-    // Parse command args
-    uint64_t state = parse_commandline_args(argc, argv);
-    uint64_t verbose = 0;
-    uint64_t general = 0;
+int main ( int argc, char *argv[] ){
+    /* Parse command args */
+    int state = parse_commandline_args(argc, argv);
+    int verbose = 0;
+    int general = 0;
     if (state == NEW_ENCODE) return run_new_compression();
     if (state == NEW_DECODE) return run_new_decompression();
     if (state == -1){
@@ -29,9 +29,9 @@ int main ( uint64_t argc, char *argv[] ){
         return run_decompression(argv[2 + verbose], argv[3 + verbose], verbose, general);
     }
 }
-uint64_t parse_commandline_args(uint64_t argc, char *argv[]){
-    // Parse the command line arguments to the program
-    uint64_t state = -1;
+int parse_commandline_args(int argc, char *argv[]){
+    /* Parse the command line arguments to the program */
+    int state = -1;
     if(argc == 2){
         if (strcmp("-nE", argv[1]) == 0 || strcmp("--new=encode", argv[1]) == 0)
             state = NEW_ENCODE;
@@ -46,12 +46,12 @@ uint64_t parse_commandline_args(uint64_t argc, char *argv[]){
         }
     }
     if (argc == 5){
-        //verbose hasnt been specified so should only be 3 inputs
+        /*verbose hasnt been specified so should only be 3 inputs */
         if (strcmp("-v", argv[2]) == 0 || strcmp("--verbose", argv[2]) == 0){
             state = state + 2;
         } else if (strcmp("-g", argv[4]) == 0 || strcmp("--general", argv[4]) == 0){
             state = state + 4;
-        } else if (strcmp("-I", argv[4]) == 0 || strcmp("--int64_teger", argv[4]) == 0){
+        } else if (strcmp("-I", argv[4]) == 0 || strcmp("--integer", argv[4]) == 0){
             state = state + 8;
         } else{
             state = -1;
@@ -60,7 +60,7 @@ uint64_t parse_commandline_args(uint64_t argc, char *argv[]){
     return state;
 }
 void print_bad_input_message(char *message){
-    // Write out the error message if bad input
+    /* Write out the error message if bad input */
     printf("Error: '%s' input incorrectly formatted!\n", message);
     printf("For compression format as such:\n");
     printf("   %s -c [--verbose|-v] <infile> <outfile>\n", message);

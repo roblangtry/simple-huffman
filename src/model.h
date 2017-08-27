@@ -23,7 +23,7 @@ struct symbol_offset
 struct model {
     uint64_t message_length;
     uint64_t no_symbols;
-    uint64_t * symbols;
+    uint32_t * symbols;
     size_t * binary_search_table;
     uint64_t length_max;
     uint64_t * no_words;
