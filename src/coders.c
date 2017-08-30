@@ -47,8 +47,20 @@ void
 elias_gamma_encode(uint32_t value, t_bwriter * writer)
 {
     uint32_t l = mylog(value);
-    unary_encode(l + 1, writer);
-    binary_encode(value, l, writer);
+    uint32_t v = value, x = 0, add = 0;
+
+    while(v > 1)
+    {
+        x = (x << 1) + 1;
+        add++;
+        if(add==30 - l){
+            write_bits(x, add, writer);
+            add = 0;
+            x = 0;
+        }
+        v--;
+    }
+    write_bits((x<<(l+1)) + value, add+1 + l, writer);
 }
 uint32_t
 elias_gamma_decode(uint32_t * V,t_breader * reader)
@@ -68,8 +80,21 @@ void
 elias_delta_encode(uint32_t value, t_bwriter * writer)
 {
     uint32_t l = (uint32_t)mylog(value);
-    elias_gamma_encode(l + 1, writer);
-    binary_encode(value, l, writer);
+    uint32_t l0 = mylog(l + 1);
+    uint32_t v = l0 + 1, x = 0, add = 0;
+
+    while(v > 1)
+    {
+        x = (x << 1) + 1;
+        add++;
+        if(add==30 - l0 - l){
+            write_bits(x, add, writer);
+            add = 0;
+            x = 0;
+        }
+        v--;
+    }
+    write_bits((((x<<(l0+1)) + l + 1) << l)+value, add+1 + l0+l, writer);
 }
 uint32_t
 elias_delta_decode(uint32_t * V,t_breader * reader)
