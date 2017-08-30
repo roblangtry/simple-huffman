@@ -14,9 +14,16 @@ cmp test.data test.out
 ls -l test.stk
 rm test.stk
 rm test.out
+echo 'SHF wsj.data test'
+time ../shuff-master/shuff-master/shuff -e test.data > test.stk
+time ../shuff-master/shuff-master/shuff -d test.stk > test.out
+cmp test.data test.out
+ls -l test.stk
+rm test.stk
+rm test.out
 echo 'NEW wsj.data test'
-time cat test.data | ./simple-huffman --new=encode > test.stk
-time cat test.stk | ./simple-huffman --new=decode > test.out
+time ./simple-huffman --new=encode < test.data > test.stk
+time ./simple-huffman --new=decode < test.stk > test.out
 cmp test.data test.out
 ls -l test.stk
 rm test.stk

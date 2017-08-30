@@ -1,39 +1,34 @@
 #include "coders.h"
+uint32_t first = 0;
+uint32_t logs[SYMBOL_MAP_SIZE];
 void
 binary_encode(uint32_t value, uint32_t length, t_bwriter * writer)
 {
-    uint32_t b, v = value;
-    while(length > 0)
-    {
-        b = v % 2;
-        write_bit(b, writer);
-        v = v >> 1;
-        length--;
-    }
+    write_bits(value, length, writer);
 }
 uint32_t
 binary_decode(uint32_t * V,uint32_t length, t_breader * reader)
 {
-    uint32_t i = 0, b;
-    *V = 0;
-    while(i<length)
-    {
-        if (get_bit(reader, &b) == 0) return 0;
-        *V += b << i;
-        i++;
-    }
-    return 1;
+    int i = get_bits(reader, V, length);
+        return i;
 }
 void
 unary_encode(uint32_t value, t_bwriter * writer)
 {
-    uint32_t v = value;
+    uint32_t v = value, x = 0, add = 0;
+
     while(v > 1)
     {
-        write_bit(1, writer);
+        x = (x << 1) + 1;
+        add++;
+        if(add==30){
+            write_bits(x, add, writer);
+            add = 0;
+            x = 0;
+        }
         v--;
     }
-    write_bit(0, writer);
+    write_bits(x<<1, add+1, writer);
 }
 uint32_t
 unary_decode(uint32_t * V, t_breader * reader)
@@ -51,7 +46,7 @@ unary_decode(uint32_t * V, t_breader * reader)
 void
 elias_gamma_encode(uint32_t value, t_bwriter * writer)
 {
-    uint32_t l = (uint32_t)log2(value);
+    uint32_t l = mylog(value);
     unary_encode(l + 1, writer);
     binary_encode(value, l, writer);
 }
@@ -66,13 +61,13 @@ elias_gamma_decode(uint32_t * V,t_breader * reader)
         return 1;
     }
     if(binary_decode(V, l, reader) == 0) return 0;
-    *V = *V + (1 << l);
+    /* *V = *V + (1 << l); */
     return 1;
 }
 void
 elias_delta_encode(uint32_t value, t_bwriter * writer)
 {
-    uint32_t l = (uint32_t)log2(value);
+    uint32_t l = (uint32_t)mylog(value);
     elias_gamma_encode(l + 1, writer);
     binary_encode(value, l, writer);
 }
@@ -87,11 +82,26 @@ elias_delta_decode(uint32_t * V,t_breader * reader)
         return 1;
     }
     if(binary_decode(V, l, reader) == 0) return 0;
-    *V = *V + (1 << l);
+    /* *V = *V + (1 << l); */
     return 1;
 }
 
 
-uint32_t log2(uint32_t value){
-    return log(value)/log(2);
+uint32_t mylog(uint32_t value){
+    if(first == 0){
+        uint32_t index = 1;
+        uint32_t length = 0;
+        uint32_t width = 0;
+        while(index < SYMBOL_MAP_SIZE)
+        {
+            if(width == 0){
+                width = 1 << length;
+                length++;
+            }
+            logs[index++] = length;
+            width--;
+        }
+        first = 1;
+    }
+    return logs[value];
 }

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <math.h>
 #include "nio.h"
 #include "constants.h"
 #ifndef CODERS_CODE
@@ -15,5 +14,5 @@ void elias_gamma_encode(uint32_t value, t_bwriter * writer);
 uint32_t elias_gamma_decode(uint32_t * V, t_breader * reader);
 void elias_delta_encode(uint32_t value, t_bwriter * writer);
 uint32_t elias_delta_decode(uint32_t * V, t_breader * reader);
-uint32_t log2(uint32_t value);
+uint32_t mylog(uint32_t value);
 #endif

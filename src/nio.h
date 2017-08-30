@@ -7,8 +7,8 @@
 #define NIO_CODE
 typedef struct {
     uint32_t buffer[BUFFER_SZ];
-    uint32_t current;
-    size_t head;
+    uint64_t current;
+    int head;
     size_t buffer_head;
 } t_bwriter;
 typedef struct {
@@ -17,16 +17,19 @@ typedef struct {
 } t_iwriter;
 typedef struct {
     uint32_t buffer[BUFFER_SZ];
-    uint32_t current;
+    uint64_t current;
     size_t length;
-    size_t head;
+    int head;
     size_t buffer_head;
     int end;
 } t_breader;
 void start_breader(t_breader * reader);
 uint32_t get_bit(t_breader * reader, uint32_t * value);
+uint32_t get_bits(t_breader * reader, uint32_t * value, uint32_t len);
+void io_backfeed(t_breader * reader, uint32_t buffer, uint32_t len);
 void start_bwriter(t_bwriter * writer);
 void write_bit(uint32_t b, t_bwriter * writer);
+void write_bits(uint32_t val, uint32_t len, t_bwriter * writer);
 void flush_bits(t_bwriter * writer);
 size_t get_file_size(FILE * stream);
 int atend(t_breader * reader);

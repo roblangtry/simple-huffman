@@ -42,7 +42,12 @@ void start_breader(t_breader * reader){
     reader->end = 0;
 }
 uint32_t get_bit(t_breader * reader, uint32_t * value){
-    if(reader->head == 0){
+    return get_bits(reader, value, 1);
+}
+uint32_t get_bits(t_breader * reader, uint32_t * value, uint32_t len)
+{
+    uint32_t lint, rint;
+    if(len > reader->head){
         /* pull from buffer */
         if(reader->buffer_head == reader->length)
         {
@@ -51,52 +56,72 @@ uint32_t get_bit(t_breader * reader, uint32_t * value){
             if(reader->length != BUFFER_SZ) reader->end = 1;
             reader->buffer_head = 0;
         }
-        if(reader->buffer_head == reader->length)
-        {
-            return 0;
-        }
+        if(reader->buffer_head == reader->length) return 0;
         else
         {
-            reader->current = reader->buffer[reader->buffer_head++];
+            lint = reader->current << (len - reader->head);
+            rint = reader->buffer[reader->buffer_head] >> (32 - (len - reader->head));
+            reader->head = 32 - (len - reader->head);
+            reader->current = reader->buffer[reader->buffer_head++] % (1 << reader->head);
+            *value = lint + rint;
         }
-        reader->head = 32;
     }
-    if(reader->current & BIT_VALUES[reader->head--]) {
-        *value = 1;
-        return 1;
+    else
+    {
+        *value = reader->current >> (reader->head - len);
+        reader->current = reader->current - (*value << (reader->head - len));
+        reader->head = reader->head - len;
     }
-    *value = 0;
     return 1;
+}
+void io_backfeed(t_breader * reader, uint32_t buffer, uint32_t len)
+{
+    uint64_t value = buffer << reader->head;
+    reader->current += value;
+    reader->length += len;
 }
 void start_bwriter(t_bwriter * writer){
     writer->current = 0;
-    writer->head = 32;
+    writer->head = 0;
     writer->buffer_head = 0;
 }
 void write_bit(uint32_t b, t_bwriter * writer){
-    if(b)
-        writer->current += BIT_VALUES[writer->head];
-    writer->head--;
-    if(writer->head == 0)
+    write_bits(b, 1, writer);
+}
+void write_bits(uint32_t val, uint32_t len, t_bwriter * writer){
+    uint32_t bits_from_lint;
+    uint32_t bits_from_rint;
+    uint32_t lint;
+    uint32_t rint;
+    if(writer->head + len >= 32)
     {
-        writer->buffer[writer->buffer_head++] = writer->current;
+        bits_from_lint = writer->head;
+        bits_from_rint = 32 - bits_from_lint;
+        lint = writer->current << bits_from_rint;
+        rint = val >> (len - bits_from_rint);
+        writer->buffer[writer->buffer_head++] = lint + rint;
+        writer->current = val - (rint << (len - bits_from_rint));
+        writer->head = len - bits_from_rint;
         if(writer->buffer_head == BUFFER_SZ)
         {
             fwrite(writer->buffer, sizeof(uint32_t), writer->buffer_head, stdout);
             writer->buffer_head = 0;
         }
-        writer->current = 0;
-        writer->head = 32;
+    }
+    else
+    {
+        writer->current = (writer->current << len) + val;
+        writer->head += len;
     }
 }
 void flush_bits(t_bwriter * writer)
 {
-    if(writer->head != 32)
-        writer->buffer[writer->buffer_head++] = writer->current;
+    if(writer->head > 0)
+        writer->buffer[writer->buffer_head++] = writer->current << (32 - writer->head);
     fwrite(writer->buffer, sizeof(uint32_t), writer->buffer_head, stdout);
     writer->buffer_head = 0;
     writer->current = 0;
-    writer->head = 32;
+    writer->head = 0;
 }
 size_t get_file_size(FILE * stream){
     size_t off, sz;
