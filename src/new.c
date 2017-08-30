@@ -42,11 +42,12 @@ int syms_used_cmpfunc2 (const void * a, const void * b)
 void mr_encode_block(C_block_t * block, t_bwriter * writer)
 {
     uint32_t n = 0;
-    uint32_t i, x, L, nmax, m;
+    uint32_t i, x, L, nmax, m, xmax = 0, j = 0;
     uint32_t * M = block->content - 1;
     uint32_t * table0 = calloc(SYMBOL_MAP_SIZE, sizeof(uint32_t));
     uint32_t * table = table0 - 1;
     uint32_t * syms_used0 = malloc(BLOCK_SIZE * sizeof(uint32_t));
+    uint32_t * syms_used1 = malloc(BLOCK_SIZE * sizeof(uint32_t));
     uint32_t * syms_used = syms_used0 - 1;
     uint32_t * spare;
     uint32_t * w;
@@ -57,12 +58,16 @@ void mr_encode_block(C_block_t * block, t_bwriter * writer)
     for(i = 1; i <= m; i++)
     {
         x = M[i];
+        if(x > xmax) xmax = x;
         if(table[x] == 0){
             n++;
             syms_used[n] = x;
         }
         table[x] += 1;
     }
+    for(i=1;i<=xmax;i++)
+        if(table[i])
+            syms_used1[j++] = i;
     global_hack = table;
     qsort(syms_used+1, n, sizeof(uint32_t), syms_used_cmpfunc);
     spare = malloc(n * sizeof(uint32_t));
@@ -71,9 +76,9 @@ void mr_encode_block(C_block_t * block, t_bwriter * writer)
     calculate_huffman_code(spare, n);
     for(i=1;i<=n;i++)
         table[syms_used[i]] = spare[i-1];
-    free(spare);
     L = table[syms_used[n]];
-    qsort(syms_used+1, n, sizeof(uint32_t), syms_used_cmpfunc2);
+    syms_used = syms_used1 - 1;
+    /* qsort(syms_used+1, n, sizeof(uint32_t), syms_used_cmpfunc2); */
     nmax = syms_used[n];
     w = calloc(L+2, sizeof(uint32_t));
     base = malloc((L+2) * sizeof(uint32_t));
